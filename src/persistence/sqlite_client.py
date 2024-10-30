@@ -1,9 +1,11 @@
 import sqlite3
 from collections import Counter
 
-from text_processor import Token
+from models import Token
 
-db_name = "alto_30_confidence.db"
+from config import config
+
+db_name = f"data/output_data/alto_30_confidence_{config.IMPORT['decade']}.db"
 token_stats_table = "token_stats"
 token_stats_table_columns = ["id",
                              "token",
@@ -13,12 +15,14 @@ token_stats_table_columns = ["id",
                              "w_31", "p_31", "w_32", "p_32", "w_33", "p_33",
                              "w_51", "p_51", "w_52", "p_52", "w_53", "p_53", "w_54", "p_54", "w_55", "p_55"]
 
+def get_connection():
+    return sqlite3.connect(db_name)
 
 def create_sqlite_database():
     """ create a database connection to an SQLite database """
     conn = None
     try:
-        conn = sqlite3.connect(db_name)
+        conn = get_connection()
         print(sqlite3.sqlite_version)
 
         create_tables()
@@ -62,7 +66,7 @@ def create_tables():
 
     # create a database connection
     try:
-        with sqlite3.connect(db_name) as conn:
+        with get_connection() as conn:
             cursor = conn.cursor()
             for statement in sql_statements:
                 cursor.execute(statement)
@@ -81,7 +85,7 @@ def create_tables():
 
 def add_token(decade: str, token: Token, probability: float):
     try:
-        with sqlite3.connect(db_name) as conn:
+        with get_connection() as conn:
             insert_columns = token_stats_table_columns[1:]
             vals = "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?"
 

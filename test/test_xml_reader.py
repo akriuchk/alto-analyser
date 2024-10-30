@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-from xml_reader import extract_text_lines, avg_confidence
+from processor.xml_processor import extract_text_lines
 
 
 class Test(TestCase):
     def test_extract_text_line(self):
-        xml = read_file_into_string("test_data/ALTO/000001280_000001.xml")
+        xml = read_file_into_string("../test_data/ALTO/000001280_000001.xml")
         for text_line in extract_text_lines(xml):
             print(text_line)
 

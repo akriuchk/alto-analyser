@@ -2,6 +2,8 @@ from collections import OrderedDict
 
 class Cache(OrderedDict):
     """Dict with a limited length, ejecting LRUs as needed."""
+    cache_hit: int = 0
+    cache_miss: int = 0
 
     def __init__(self, *args, cache_len: int = 10, **kwargs):
         assert cache_len > 0
@@ -23,6 +25,7 @@ class Cache(OrderedDict):
         val = super().__getitem__(key)
         super().move_to_end(key)
 
+        self.__update_cache_stat(val)
         return val
 
     def get(self, key):
@@ -30,4 +33,16 @@ class Cache(OrderedDict):
         if val is not None:
             super().move_to_end(key)
 
+        self.__update_cache_stat(val)
         return val
+
+    def __update_cache_stat(self, value):
+        if value is None:
+            self.cache_miss += 1
+        else:
+            self.cache_hit += 1
+
+    def print_cache_stats(self):
+        print(f"cache stats: size: {len(self)} "
+              f"hits: {self.cache_hit}({self.cache_hit / (self.cache_hit + self.cache_miss):.3f})"
+              f",miss: {self.cache_miss}({self.cache_miss / (self.cache_hit + self.cache_miss):.3f})")

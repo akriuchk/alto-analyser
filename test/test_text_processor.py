@@ -1,12 +1,12 @@
 from unittest import TestCase
 
-import text_processor
-from text_processor import collect_window_stats, merge_tokens_stats
+from processor import text_processor
+from processor.text_processor import collect_window_stats, merge_tokens_stats
 
 
 class Test(TestCase):
     def test_find_ngrams(self):
-      text_processor.c.clear()
+      text_processor.token_cache.clear()
       result = {}
       updates = collect_window_stats(result,["a", "b", "c"], [3, 5])
       for token in updates:
@@ -29,7 +29,7 @@ class Test(TestCase):
 
 
     def test_find_ngrams_update(self):
-      text_processor.c.clear()
+      text_processor.token_cache.clear()
       result = {}
       updates = collect_window_stats(result,["d", "b", "a", "b", "c", "z"], [3, 5])
       for token in updates:
@@ -57,7 +57,7 @@ class Test(TestCase):
       text_processor.print_cache_stats()
 
     def test_token_add(self):
-      text_processor.c.clear()
+      text_processor.token_cache.clear()
       result_original = {}
       result_adding = {}
 

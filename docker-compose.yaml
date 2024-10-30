@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    networks:
+      - alto
+    ports:
+      - "27017:27017"
+    volumes:
+      -  mongo-volume:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+  mongo-express:
+    image: mongo-express
+    restart: unless-stopped
+    networks:
+      - alto
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_AUTH_USERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+
+networks:
+  alto:
+volumes:
+  mongo-volume:

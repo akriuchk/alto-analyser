@@ -1,3 +1,4 @@
+import logging
 from typing import Iterator
 from lxml import etree
 
@@ -8,9 +9,10 @@ word_confidence_attr: str = "WC"
 confidence_sum: float = 0.0
 word_count: int = 0
 
+log = logging.getLogger('alto.text_processor')
 
-def extract_text_lines(xml: str) -> Iterator[str]:
-    #log print(f"read str into XML dom str:{xml[:240]}")
+def extract_text_lines(xml: bytes) -> Iterator[str]:
+    log.debug(f"read str into XML dom str:{xml[:240]}")
     root = etree.XML(xml)
     text_lines_elems: list = root.findall(".//TextLine")
 
@@ -22,7 +24,7 @@ def extract_text_lines(xml: str) -> Iterator[str]:
         sentence: list[str] = []
         for string_elem in line.findall("String"):
             if default_str_attr not in string_elem.attrib:
-                print(f"Warn: CONTENT attr not found on {string_elem}")
+                log.info(f"Warn: CONTENT attr not found on {string_elem}")
                 continue
             if (full_str_attr in string_elem.attrib
                     and (len(sentence) == 0 or string_elem.attrib[full_str_attr] != sentence[-1])):
@@ -51,5 +53,5 @@ def add_confidence(string_elem):
 
 
 def avg_confidence() -> float:
-    print(f'{confidence_sum}/{word_count} * 100%')
+    log.debug(f'{confidence_sum}/{word_count} * 100%')
     return (confidence_sum / word_count) * 100
