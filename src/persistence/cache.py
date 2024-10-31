@@ -1,3 +1,4 @@
+import logging
 from collections import OrderedDict
 
 class Cache(OrderedDict):
@@ -17,6 +18,7 @@ class Cache(OrderedDict):
         if not self.limit_reached:
             if len(self) == self.cache_len:
                 self.limit_reached = True
+                logging.info(f"cache limit reached {self.cache_len}")
         else:
             old_key = super().popitem(last=False)
             #log print(f"remove {old_key[0]} from cache")

@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Iterable
 
+from lxml.html.diff import token
 from pymongo import MongoClient, ASCENDING, UpdateOne
 from config.config import MONGODB
 from models import dataclass_to_dict, Token
@@ -15,7 +16,7 @@ def get_mongo_connection(collection: str):
     if _db is None:
         try:
             logging.info("Connecting to MongoDB")
-            uri = "mongodb://%s:%s@%s" % (
+            uri = "mongodb://%s:%s@%s/?directConnection=true" % (
                 MONGODB['login'], MONGODB['pass'], MONGODB['host'])
 
             client: MongoClient = MongoClient(uri)
@@ -49,6 +50,7 @@ def __ensure_tokens_token_unique_idx():
 
 def save_tokens(data):
     collection = get_mongo_connection(tokens_collection)
+    # collection.watch()
     try:
         if isinstance(data, Iterable):
             logging.debug(f"Start to convert data to json")
@@ -70,19 +72,47 @@ def find_token(token: str):
     return collection.find_one({'token': token})
 
 
+def find_all_tokens():
+    collection = get_mongo_connection(tokens_collection)
+
+    return collection.find()
+
+
+def open_change_stream():
+    collection = get_mongo_connection(tokens_collection)
+    pipeline = [
+        {"$match": {
+            "$expr": {
+                "$gt": [{"$bsonSize": "$$ROOT"}, 4*1024]  # Only documents larger than 4KB
+                # "$gt": [{"$bsonSize": "$$ROOT"}, 4*1024*1024]  # Only documents larger than 4MB
+            }
+        }}
+    ]
+    return collection.watch(pipeline=pipeline, full_document="updateLookup")
+
+
 def update_token_neighbors(data: Iterable[Token]):
     collection = get_mongo_connection(tokens_collection)
 
+    # "$push": {"stats.3.distance_stat.1": new_value}
+
+    def get_push_operators(token: Token) -> dict[str: dict]:
+        push_dict = {}
+        for stat in token.stats.values():
+            for distance, tokens in stat.distance_bag.items():
+                push_dict.update({f'stats.{stat.window}.distance_bag.{distance}': {'$each': tokens}})
+        return push_dict
+
     updates = [
-        UpdateOne({'token': token.token},{'$set': dataclass_to_dict(token)})
+        UpdateOne(
+            {'token': token.token},
+            {
+                '$set': {'frequency': token.frequency},
+                '$push': get_push_operators(token)
+            }
+        )
         for token in data
     ]
 
     result = collection.bulk_write(updates)
     logging.info(f"Updated: {result.modified_count}")
-
-
-def find_all_tokens():
-    collection = get_mongo_connection(tokens_collection)
-
-    return collection.find()

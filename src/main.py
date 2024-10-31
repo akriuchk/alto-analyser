@@ -2,6 +2,7 @@ import logging
 import os
 import time
 from collections import Counter
+import multiprocessing
 
 import processor.text_processor
 from config import config
@@ -10,6 +11,8 @@ from persistence.sqlite_client import create_sqlite_database, add_token
 from persistence.storage import Storage
 from processor.text_processor import tokenize, collect_window_stats
 from models import Token
+from processor.update_processor import update_counter
+
 
 def write_result(final_counter):
     result_to_write: dict[str, Token] = storage.find_all()
@@ -27,7 +30,7 @@ def write_result(final_counter):
                 logging.info(f"{i / len(result_to_write):.4f}")
             add_token(decade, token, final_counter[token.token] / total_token_sum)
         logging.info(f"[{len(result_to_write)}] done in {time.time() - start_write}s")
-    except Exception as e :
+    except Exception as e:
         logging.error(f"failed to write a file, retry, {e}")
 
         os.rename("data/1800_books/output_data/alto_30_confidence_1800.db"
@@ -46,11 +49,12 @@ def call_stat_recalculation(token: Token) -> Token:
 
 
 if __name__ == '__main__':
+    logging.info(f'main() started on {os.getpid()}')
     decade = config.IMPORT["decade"]
 
     create_sqlite_database()
 
-    # cap = 5000
+    cap = 5000
 
     c_page = 0
     c_lines = 0
@@ -58,7 +62,6 @@ if __name__ == '__main__':
     xml_text_size: int = 0
     text_size: int = 0
     counter: Counter = Counter()
-
 
     filepath = f'data/1800_books/txt'
 
@@ -81,30 +84,46 @@ if __name__ == '__main__':
     #         #     print("cap reached")
     #         #     break
 
-    storage:IStorage = Storage()
+    storage: IStorage = Storage()
     processor.text_processor.storage = storage
+
+    process = multiprocessing.Process(target=update_counter)
+    process.start()
 
     with open(f"{filepath}/{decade}.txt", "r") as file:
         updated_tokens: dict[str, Token] = {}
+        batch_start = time.time()
+        batch_size = 2500
+        start_line = 0
         for line_number, line in enumerate(file, start=1):
+            if line_number < start_line:
+                continue
+
             tokens = tokenize(line)
             line_token_stats = collect_window_stats(updated_tokens, tokens, [3, 5])
             counter.update(tokens)
 
-            if line_number % 5000 == 0:
+            if line_number % batch_size == 0:
                 result_size = len(updated_tokens)
-                logging.info(f"{time.time() - start:.2f}s: result size: {result_size}, next line {line_number},{line_number*100/17657703:.2f}%, {result_size / (time.time() - start):.1f} res/s")
+                logging.info(
+                    f"{time.time() - start:.2f}s: result size: {result_size}, next line {line_number}, "
+                    f"{line_number * 100 / 17657703:.2f}%, {batch_size / (time.time() - batch_start):.1f} lines/s")
                 # wait for completion
                 # will be done by workers
-                for token in updated_tokens.values():
-                    token.recalculate_distance_bags()
+                # for token in updated_tokens.values():
+                #     token.recalculate_distance_bags()
 
                 storage.save_many(set(updated_tokens.values()))
+
+                for token in updated_tokens.values():
+                    [stat.distance_bag.clear() for stat in token.stats.values()]
                 updated_tokens.clear()
 
-            # if line_number >= cap:
-            #     print("cap reached")
-            #     break
+                batch_start = time.time()
+
+            if line_number >= cap:
+                print("cap reached")
+                break
 
             # if line_number % 1000000 == 0:
             #     write_result(result, counter)
