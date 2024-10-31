@@ -1,10 +1,10 @@
 import logging
 from collections.abc import Iterable
 
-from lxml.html.diff import token
-from pymongo import MongoClient, ASCENDING, UpdateOne
+from pymongo import MongoClient, ASCENDING, UpdateOne, ReturnDocument
+
 from config.config import MONGODB
-from models import dataclass_to_dict, Token
+from models import dataclass_to_dict, Token, Stats
 
 tokens_collection = 'tokens'
 
@@ -24,6 +24,7 @@ def get_mongo_connection(collection: str):
             logging.debug("Connected to MongoDB successfully")
 
             __ensure_tokens_token_unique_idx()
+            __drop_collection()
         except Exception as e:
             logging.error(f"Failed to connect to MongoDB: {e}")
             raise
@@ -33,7 +34,7 @@ def get_mongo_connection(collection: str):
 
 def __drop_collection():
     if MONGODB['recreate']:
-        get_mongo_connection(tokens_collection).drop_collection()
+        get_mongo_connection(tokens_collection).drop()
 
 
 def __ensure_tokens_token_unique_idx():
@@ -71,6 +72,11 @@ def find_token(token: str):
     collection = get_mongo_connection(tokens_collection)
     return collection.find_one({'token': token})
 
+def find_token_by_id(id: str, version: int):
+    """could return None"""
+    collection = get_mongo_connection(tokens_collection)
+    return collection.find_one({'_id': id, 'version': version})
+
 
 def find_all_tokens():
     collection = get_mongo_connection(tokens_collection)
@@ -83,8 +89,8 @@ def open_change_stream():
     pipeline = [
         {"$match": {
             "$expr": {
-                "$gt": [{"$bsonSize": "$$ROOT"}, 4*1024]  # Only documents larger than 4KB
-                # "$gt": [{"$bsonSize": "$$ROOT"}, 4*1024*1024]  # Only documents larger than 4MB
+                # "$gt": [{"$bsonSize": "$$ROOT"}, 4*1024]  # Only documents larger than 4KB
+                "$gt": [{"$bsonSize": "$$ROOT"}, 4*1024*1024]  # Only documents larger than 4MB
             }
         }}
     ]
@@ -96,19 +102,20 @@ def update_token_neighbors(data: Iterable[Token]):
 
     # "$push": {"stats.3.distance_stat.1": new_value}
 
-    def get_push_operators(token: Token) -> dict[str: dict]:
+    def get_push_operations(token: Token) -> dict[str: dict]:
         push_dict = {}
         for stat in token.stats.values():
             for distance, tokens in stat.distance_bag.items():
-                push_dict.update({f'stats.{stat.window}.distance_bag.{distance}': {'$each': tokens}})
+                push_dict.update({f'stats.{stat.window}.distance_bag.{distance}': {"$each": tokens}})
         return push_dict
 
     updates = [
         UpdateOne(
             {'token': token.token},
             {
-                '$set': {'frequency': token.frequency},
-                '$push': get_push_operators(token)
+                "$set": {"frequency": token.frequency},
+                "$inc": {"version": 1},
+                "$push": get_push_operations(token)
             }
         )
         for token in data
@@ -116,3 +123,27 @@ def update_token_neighbors(data: Iterable[Token]):
 
     result = collection.bulk_write(updates)
     logging.info(f"Updated: {result.modified_count}")
+
+def update_token_counters(id: str, version: int, distance_stat_counters: list[Stats]):
+    collection = get_mongo_connection(tokens_collection)
+
+    set_stat_ops = {}
+    unset_bag_ops = {}
+    for s in distance_stat_counters:
+        for distance, counter in s.distance_stat.items():
+            set_stat_ops[f'stats.{s.window}.distance_stat.{distance}'] = counter
+            unset_bag_ops[f'stats.{s.window}.distance_bag.{distance}'] = ""
+
+    result = collection.find_one_and_update(
+        {'_id': id, 'version': version},
+        {
+            "$inc": {"version": 1},
+            "$set": set_stat_ops,
+            "$unset": unset_bag_ops
+        }, return_document=ReturnDocument.AFTER
+    )
+
+    if result:
+        logging.info(f"Updated: {result['token']}, {version} -> {result['version']}")
+    else:
+        logging.info(f"{id}/{version} not found")

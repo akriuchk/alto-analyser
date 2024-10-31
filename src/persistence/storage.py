@@ -51,6 +51,8 @@ class Storage(IStorage):
         if len(existing_tokens) > 0:
             self.update_many(existing_tokens)
 
+        token_cache.print_cache_stats()
+
     def find_all(self) -> dict[str, Token]:
        return {t['token']: dict_to_dataclass(t) for t in mongo_client.find_all_tokens()}
 

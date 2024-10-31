@@ -8,7 +8,7 @@ from typing import Optional
 @dataclass
 class Stats:
     window: int
-    distance_stat: dict[int, Counter]
+    distance_stat: dict[int, Counter] # distance, counter
     distance_bag: dict[int, list[str]]
 
     # @functools.cache to add cache here I need to make Stats class hasheable with impl of __hash__ method
@@ -36,8 +36,9 @@ class Stats:
 @dataclass
 class Token:
     token: str
-    stats: dict[int, Stats]  # window, counter
+    stats: dict[int, Stats]  # window, stats
     frequency: int
+    version: int = field(default=1)
     id: Optional[str] = field(default=None)
 
     def add(self, other):
@@ -77,7 +78,8 @@ def dict_to_dataclass(data) -> Token:
             distance_bag={}
         ) for window, stats_item in stats.items()},
         frequency=data['frequency'],
-        id=data['_id']
+        id=data['_id'],
+        version=data['version']
     )
 
 
