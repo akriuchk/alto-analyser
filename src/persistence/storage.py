@@ -10,12 +10,24 @@ token_cache = Cache(cache_len=100000)
 
 
 class Storage(IStorage):
+    def __init__(self):
+        #init cache
+        logging.info("initiate cache")
+
+        for t in mongo_client.find_top_tokens(50000):
+            token_cache[t['token']] = dict_to_dataclass(t)
+
+        logging.info(f"cache filled initiated size={len(token_cache)}")
+
 
     def insert_one(self, data: Token) -> None:
         pass
 
     def insert_many(self, tokens: Iterable[Token]) -> None:
         mongo_client.save_tokens(tokens)
+
+    def find_all(self) -> dict[str, Token]:
+       return {t['token']: dict_to_dataclass(t) for t in mongo_client.find_all_tokens()}
 
     def find(self, token: str) -> Token:
         result: Token = token_cache.get(token)
@@ -52,9 +64,6 @@ class Storage(IStorage):
             self.update_many(existing_tokens)
 
         token_cache.print_cache_stats()
-
-    def find_all(self) -> dict[str, Token]:
-       return {t['token']: dict_to_dataclass(t) for t in mongo_client.find_all_tokens()}
 
     def delete_all(self) -> None:
         pass

@@ -24,7 +24,7 @@ def get_mongo_connection(collection: str):
             logging.debug("Connected to MongoDB successfully")
 
             __ensure_tokens_token_unique_idx()
-            __drop_collection()
+            # __drop_collection()
         except Exception as e:
             logging.error(f"Failed to connect to MongoDB: {e}")
             raise
@@ -82,6 +82,12 @@ def find_all_tokens():
     collection = get_mongo_connection(tokens_collection)
 
     return collection.find()
+
+
+def find_top_tokens(search_limit: int = 1000):
+    collection = get_mongo_connection(tokens_collection)
+
+    return collection.find().sort("frequency", -1).limit(search_limit)
 
 
 def open_change_stream():
