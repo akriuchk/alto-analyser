@@ -23,7 +23,7 @@ class Test(TestCase):
       assert 5 in result['b'].stats.keys()
 
       # assert random value
-      assert 1 == result['c'].stats[3].distance_stat[1]['b']
+      assert 1 == result['c'].stats[3].counter[1]['b']
 
       assert 2 == result['a'].stats[3].total_neighbors()
 
@@ -37,14 +37,14 @@ class Test(TestCase):
 
       print(updates)
 
-      assert 2 == result['a'].stats[3].distance_stat[1]['b']
-      assert 2 == result['a'].stats[5].distance_stat[1]['b']
+      assert 2 == result['a'].stats[3].counter[1]['b']
+      assert 2 == result['a'].stats[5].counter[1]['b']
 
-      assert 1 == result['d'].stats[3].distance_stat[1]['b']
-      assert 1 == result['d'].stats[5].distance_stat[5]['z']
+      assert 1 == result['d'].stats[3].counter[1]['b']
+      assert 1 == result['d'].stats[5].counter[5]['z']
 
-      assert 1 == result['c'].stats[3].distance_stat[1]['b']
-      assert 1 == result['c'].stats[5].distance_stat[1]['b']
+      assert 1 == result['c'].stats[3].counter[1]['b']
+      assert 1 == result['c'].stats[5].counter[1]['b']
 
       assert 4 == result['c'].stats[3].total_neighbors()
       assert 5 == result['c'].stats[5].total_neighbors()
@@ -73,7 +73,7 @@ class Test(TestCase):
 
       print(result_original)
 
-      assert 2 == result_original['b'].stats[3].distance_stat[1]['c']
-      assert 2 == result_original['c'].stats[3].distance_stat[1]['b']
+      assert 2 == result_original['b'].stats[3].counter[1]['c']
+      assert 2 == result_original['c'].stats[3].counter[1]['b']
 
-      assert 1 == result_original['d'].stats[3].distance_stat[1]['c']
+      assert 1 == result_original['d'].stats[3].counter[1]['c']

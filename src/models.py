@@ -1,36 +1,35 @@
 from collections import Counter
-from dataclasses import dataclass, asdict, make_dataclass, field
+from dataclasses import dataclass, asdict, field
 
-import logging
 from typing import Optional
 
 
 @dataclass
 class Stats:
     window: int
-    distance_stat: dict[int, Counter] # distance, counter
-    distance_bag: dict[int, list[str]]
+    counter: Counter
+    token_bag: list[str]
 
     # @functools.cache to add cache here I need to make Stats class hasheable with impl of __hash__ method
     def total_neighbors(self) -> int:
-        logging.debug("Initiate total neighbors calculation and cache the value")
-        return sum([sum(v.values()) for v in self.distance_stat.values()])
+        # logging.debug("Initiate total neighbors calculation and cache the value")
+        return self.counter.total()
 
-    def get_distance_prob(self) -> dict[int, float]:
-        result = {window: 0.0 for window in range(1, self.window + 1)}
-        for distance, counter in self.distance_stat.items():
-            result[distance] = counter.most_common(1)[0][1] / sum(counter.values())
+    def get_distance_prob(self, top_n) -> list:
+        result = []
+
+        total = self.total_neighbors()
+        for token, amount in self.counter.most_common(top_n):
+            result.append((token, amount / total))
+
+        for i in range(len(result), top_n):
+            result.append(('<none>', 0))
 
         return result
 
     def recalculate_distance_stats(self):
-        for distance, token_bag in self.distance_bag.items():
-            stat = self.distance_stat.get(distance)
-            if stat is None:
-                self.distance_stat[distance] = Counter(token_bag)
-            else:
-                stat.update(token_bag)
-        self.distance_bag.clear()
+        self.counter.update(self.token_bag)
+        self.token_bag.clear()
 
 
 @dataclass
@@ -44,13 +43,12 @@ class Token:
     def add(self, other):
         self.frequency += other.frequency
         for window, stats in other.stats.items():
-            self_window_distance_stats = self.stats[window].distance_stat
-            for distance, counter in stats.distance_stat.items():
-                self_counter = self_window_distance_stats.get(distance)
-                if self_counter is None:
-                    self_window_distance_stats[distance] = counter
-                else:
-                    self_counter.update(counter)
+            self_counter = self.stats[window].counter
+            if self_counter is None:
+                self.stats[window] = stats.counter
+            else:
+                self_counter.update(stats.counter)
+
 
     def recalculate_distance_bags(self):
         for stat in self.stats.values():
@@ -59,7 +57,7 @@ class Token:
     def get_stats(self, window: int) -> Stats:
         result = self.stats.get(window)
         if result is None:
-            return Stats(window, {}, {})
+            return Stats(window, Counter(), [])
         return result
 
     def __hash__(self):
@@ -72,11 +70,11 @@ def dict_to_dataclass(data) -> Token:
         token=data['token'],
         stats={int(window): Stats(
             window=int(window),
-            distance_stat={int(distance): Counter(counter)
-                           for distance, counter
-                           in stats_item['distance_stat'].items()},
-            distance_bag={}
-        ) for window, stats_item in stats.items()},
+            counter=Counter({t: count
+                     for t, count
+                     in stats_item['counter'].items()}),
+            token_bag=[]
+        ) for window, stats_item in stats.items() if stats_item.get('counter') is not None},
         frequency=data['frequency'],
         id=data['_id'],
         version=data['version']

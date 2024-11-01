@@ -5,7 +5,6 @@ import regex as re
 
 from models import Stats, Token
 from persistence.IStorage import IStorage
-from persistence.cache import Cache
 
 # nltk.download('stopwords')
 # stop_words = set(nltk.corpus.stopwords.words('english'))
@@ -57,7 +56,7 @@ def collect_window_stats(result: dict[str, Token], tokens: list[str], windows: l
                 result_token = storage.find(token)
                 result[token] = result_token
             if result_token is None:
-                result_token = Token(token, {window: Stats(window, {}, {}) for window in windows}, 0)
+                result_token = Token(token, {window: Stats(window, Counter(), []) for window in windows}, 0)
                 result[token] = result_token
 
             result_token.frequency += 1
@@ -79,7 +78,7 @@ def collect_window_stats(result: dict[str, Token], tokens: list[str], windows: l
 
                 for window in windows:
                     if distance <= window:
-                        __put_to_neighbor_bag(result_token, window, distance, tokens_to_update)
+                        __put_to_neighbor_bag(result_token, window, tokens_to_update)
 
         except AttributeError as e:
             logging.error(f"Failed to process token {token}")
@@ -87,25 +86,17 @@ def collect_window_stats(result: dict[str, Token], tokens: list[str], windows: l
     return updated_tokens
 
 
-def __put_to_neighbor_bag(result_token, window:int , distance: int, neighbor_tokens: list[str]):
+def __put_to_neighbor_bag(result_token, window:int, neighbor_tokens: list[str]):
     if result_token.token == 'redacted' or len(neighbor_tokens) == 0:
         return
 
     window_stat: Stats = result_token.get_stats(window)
-    distance_bag = window_stat.distance_bag.get(distance)
-    if distance_bag is None:
-        distance_bag = []
-        window_stat.distance_bag[distance] = distance_bag
-    distance_bag += neighbor_tokens
+    window_stat.token_bag += neighbor_tokens
 
 
-def __update_neighbor_stat(result_token, window:int , distance: int, neighbor_tokens: list[str]):
+def __update_neighbor_stat(result_token, window:int , neighbor_tokens: list[str]):
     window_stat: Stats = result_token.stats[window]
-    distant_stat = window_stat.distance_stat.get(distance)
-    if distant_stat is None:
-        distant_stat = Counter({'none':0})
-        window_stat.distance_stat[distance] = distant_stat
-    distant_stat.update(neighbor_tokens)
+    window_stat.counter.update(neighbor_tokens)
 
 
 def merge_tokens_stats(original: dict[str, Token], adding: dict[str, Token]):

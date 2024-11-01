@@ -93,26 +93,27 @@ def add_token(decade: str, token: Token, probability: float):
                       VALUES({vals})"""
             cur = conn.cursor()
 
-            empty_counter = Counter({'none':0})
+            top_3 = token.stats[3].get_distance_prob(3)
+            top_5 = token.stats[5].get_distance_prob(5)
+
             data = (token.token, decade, token.frequency, probability,
+                    top_3[0][0],
+                    top_3[0][1],
+                    top_3[1][0],
+                    top_3[1][1],
+                    top_3[2][0],
+                    top_3[2][1],
 
-                    token.stats[3].distance_stat.get(1, empty_counter).most_common(1)[0][0],
-                    token.stats[3].get_distance_prob()[1],
-                    token.stats[3].distance_stat.get(2, empty_counter).most_common(1)[0][0],
-                    token.stats[3].get_distance_prob()[2],
-                    token.stats[3].distance_stat.get(3, empty_counter).most_common(1)[0][0],
-                    token.stats[3].get_distance_prob()[3],
-
-                    token.stats[5].distance_stat.get(1, empty_counter).most_common(1)[0][0],
-                    token.stats[5].get_distance_prob()[1],
-                    token.stats[5].distance_stat.get(2, empty_counter).most_common(1)[0][0],
-                    token.stats[5].get_distance_prob()[2],
-                    token.stats[5].distance_stat.get(3, empty_counter).most_common(1)[0][0],
-                    token.stats[5].get_distance_prob()[3],
-                    token.stats[5].distance_stat.get(4, empty_counter).most_common(1)[0][0],
-                    token.stats[5].get_distance_prob()[4],
-                    token.stats[5].distance_stat.get(5, empty_counter).most_common(1)[0][0],
-                    token.stats[5].get_distance_prob()[5],
+                    top_5[0][0],
+                    top_5[0][1],
+                    top_5[1][0],
+                    top_5[1][1],
+                    top_5[2][0],
+                    top_5[2][1],
+                    top_5[3][0],
+                    top_5[3][1],
+                    top_5[4][0],
+                    top_5[4][1],
                     )
 
             cur.execute(sql, data)

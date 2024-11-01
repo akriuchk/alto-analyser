@@ -14,8 +14,12 @@ class Storage(IStorage):
         #init cache
         logging.info("initiate cache")
 
-        for t in mongo_client.find_top_tokens(50000):
-            token_cache[t['token']] = dict_to_dataclass(t)
+        for t in mongo_client.find_top_tokens(10000):
+            try:
+                token_cache[t['token']] = dict_to_dataclass(t)
+            except Exception as exc:
+                logging.error(f"failed to restore cache on token {t}")
+                raise exc
 
         logging.info(f"cache filled initiated size={len(token_cache)}")
 

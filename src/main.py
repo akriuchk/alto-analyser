@@ -6,12 +6,13 @@ import multiprocessing
 
 import processor.text_processor
 from config import config
+from config.config import IMPORT
 from persistence.IStorage import IStorage
 from persistence.sqlite_client import create_sqlite_database, add_token
 from persistence.storage import Storage
 from processor.text_processor import tokenize, collect_window_stats
 from models import Token
-from processor.update_processor import update_counter
+from processor.update_processor import update_counter, process_change_stream
 
 
 def write_result(final_counter):
@@ -54,7 +55,7 @@ if __name__ == '__main__':
 
     create_sqlite_database()
 
-    cap = 5000
+    # cap = 5000
 
     c_page = 0
     c_lines = 0
@@ -87,8 +88,12 @@ if __name__ == '__main__':
     storage: IStorage = Storage()
     processor.text_processor.storage = storage
 
-    process = multiprocessing.Process(target=update_counter)
-    process.start()
+    lock = multiprocessing.Lock()
+
+
+    for i in range(0, IMPORT['workers']):
+        process = multiprocessing.Process(target=process_change_stream, args=(lock,i))
+        process.start()
 
     with open(f"{filepath}/{decade}.txt", "r") as file:
         updated_tokens: dict[str, Token] = {}
@@ -96,40 +101,43 @@ if __name__ == '__main__':
         batch_size = 2500
         start_line = 0
         for line_number, line in enumerate(file, start=1):
-            if line_number < start_line:
-                continue
+            with lock:
+                if line_number < start_line:
+                    continue
 
-            tokens = tokenize(line)
-            line_token_stats = collect_window_stats(updated_tokens, tokens, [3, 5])
-            counter.update(tokens)
+                tokens = tokenize(line)
+                line_token_stats = collect_window_stats(updated_tokens, tokens, [3, 5])
+                counter.update(tokens)
 
-            if line_number % batch_size == 0:
-                result_size = len(updated_tokens)
-                logging.info(
-                    f"{time.time() - start:.2f}s: result size: {result_size}, next line {line_number}, "
-                    f"{line_number * 100 / 17657703:.2f}%, {batch_size / (time.time() - batch_start):.1f} lines/s")
-                # wait for completion
-                # will be done by workers
-                # for token in updated_tokens.values():
-                #     token.recalculate_distance_bags()
+                if line_number % batch_size == 0:
+                    result_size = len(updated_tokens)
+                    logging.info(
+                        f"{time.time() - start:.2f}s: result size: {result_size}, next line {line_number}, "
+                        f"{line_number * 100 / 17657703:.2f}%, {batch_size / (time.time() - batch_start):.1f} lines/s,")
 
-                storage.save_many(set(updated_tokens.values()))
+                    # wait for completion
+                    # will be done by workers
+                    # for token in updated_tokens.values():
+                    #     token.recalculate_distance_bags()
 
-                for token in updated_tokens.values():
-                    [stat.distance_bag.clear() for stat in token.stats.values()]
-                updated_tokens.clear()
+                    storage.save_many(set(updated_tokens.values()))
 
-                batch_start = time.time()
+                    for token in updated_tokens.values():
+                        [stat.token_bag.clear() for stat in token.stats.values()]
+                    updated_tokens.clear()
 
-            if line_number >= cap:
-                print("cap reached")
-                break
+                    batch_start = time.time()
+
+            # if line_number >= cap:
+            #     print("cap reached")
+            #     break
 
             # if line_number % 1000000 == 0:
             #     write_result(result, counter)
             #
             #     print("done")
             #     exit(1)
+
     for token in updated_tokens.values():
         token.recalculate_distance_bags()
     updated_tokens.clear()
