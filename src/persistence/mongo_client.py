@@ -2,7 +2,7 @@ import logging
 import random
 from collections.abc import Iterable
 
-from pymongo import MongoClient, ASCENDING, UpdateOne, ReturnDocument
+from pymongo import MongoClient, ASCENDING, UpdateOne, ReturnDocument, WriteConcern
 
 from config.config import MONGODB, IMPORT
 from models import dataclass_to_dict, Token, Stats
@@ -11,6 +11,7 @@ tokens_collection = 'tokens'
 
 _db: MongoClient = None
 
+update_write_concern = WriteConcern(w=1) #https://www.mongodb.com/docs/manual/reference/write-concern/
 
 def get_mongo_connection(collection: str):
     global _db
@@ -197,11 +198,12 @@ def update_token_neighbors(data: Iterable[Token]):
                 "$inc": {"version": 1},
                 "$push": get_push_operations(token)
             }
+
         )
         for token in data
     ]
 
-    result = collection.bulk_write(updates)
+    result = collection.with_options(write_concern=update_write_concern).bulk_write(updates)
     logging.info(f"Updated: {result.modified_count} documents")
 
 
@@ -232,7 +234,7 @@ def update_token_counters(id: str, version: int, stats: list[Stats]):
         set_stat_ops[f'stats.{s.window}.counter'] = s.counter
         set_stat_ops[f'stats.{s.window}.token_bag'] = []
 
-    result = collection.find_one_and_update(
+    result = collection.with_options(write_concern=update_write_concern).find_one_and_update(
         {'_id': id, 'version': version},
         {
             "$inc": {"version": 1},

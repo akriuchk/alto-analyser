@@ -43,6 +43,14 @@ services:
             { _id: 0, host: "mongo-rs:27017" }
          ]
       })
+      ';
+      mongosh --username ${MONGO_INITDB_ROOT_USERNAME} --password ${MONGO_INITDB_ROOT_PASSWORD} --host mongo-rs:27017 --eval
+      '
+      use admin;
+      db.adminCommand({
+        setParameter: 1,
+        minSnapshotHistoryWindowInSeconds: 15
+      });
       '
 networks:
   alto:

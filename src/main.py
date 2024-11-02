@@ -98,7 +98,7 @@ if __name__ == '__main__':
     with open(f"{filepath}/{decade}.txt", "r") as file:
         updated_tokens: dict[str, Token] = {}
         batch_start = time.time()
-        batch_size = 2500
+        batch_size = 5000
         start_line = 0
         for line_number, line in enumerate(file, start=1):
             with lock:
@@ -109,7 +109,7 @@ if __name__ == '__main__':
                 line_token_stats = collect_window_stats(updated_tokens, tokens, [3, 5])
                 counter.update(tokens)
 
-                if line_number % batch_size == 0:
+                if len(updated_tokens) > batch_size:
                     result_size = len(updated_tokens)
                     logging.info(
                         f"{time.time() - start:.2f}s: result size: {result_size}, next line {line_number}, "
