@@ -4,14 +4,16 @@ from collections.abc import Iterable
 
 from pymongo import MongoClient, ASCENDING, UpdateOne, ReturnDocument, WriteConcern
 
-from config.config import MONGODB, IMPORT
-from models import dataclass_to_dict, Token, Stats
+from config import Config
+from models import dataclass_to_dict, Token, Stats, NewToken
 
-tokens_collection = 'tokens'
+tokens_collection = 'tokens_1810'
 
 _db: MongoClient = None
+config = Config()
 
-update_write_concern = WriteConcern(w=1) #https://www.mongodb.com/docs/manual/reference/write-concern/
+update_write_concern = WriteConcern(w=1)  # https://www.mongodb.com/docs/manual/reference/write-concern/
+
 
 def get_mongo_connection(collection: str):
     global _db
@@ -19,10 +21,10 @@ def get_mongo_connection(collection: str):
         try:
             logging.info("Connecting to MongoDB")
             uri = "mongodb://%s:%s@%s/?directConnection=true" % (
-                MONGODB['login'], MONGODB['pass'], MONGODB['host'])
+                config.mongo_login, config.mongo_pw, config.mongo_host)
 
             client: MongoClient = MongoClient(uri)
-            _db = client[MONGODB['database']]
+            _db = client[config.mongo_db]
             logging.debug("Connected to MongoDB successfully")
 
             __ensure_tokens_token_unique_idx()
@@ -34,19 +36,19 @@ def get_mongo_connection(collection: str):
     return _db[collection]
 
 
-def __drop_collection():
-    if MONGODB['recreate']:
-        get_mongo_connection(tokens_collection).drop()
+# def __drop_collection():
+# if MONGODB['recreate']:
+#     get_mongo_connection(tokens_collection).drop()
 
 
 def __ensure_tokens_token_unique_idx():
     try:
         get_mongo_connection(tokens_collection).create_index(
-            [("token", ASCENDING)],
+            [("word", ASCENDING)],
             unique=True,
-            name="tokens_token_unique_idx"
+            name="tokens_word_unique_idx"
         )
-        logging.info("Unique index on 'token' created in tokens collection")
+        logging.info("Unique index on 'word' created in tokens collection")
     except Exception as e:
         logging.debug(f"Failed to create tokens_token_unique_idx: {e}")
 
@@ -59,7 +61,7 @@ def save_tokens(data):
             documents = [__to_document(item) for item in data]
             logging.debug(f"Converted")
             collection.insert_many(documents)
-            logging.info(f"Inserted: {len(data)} documents")
+            logging.debug(f"Inserted: {len(data)} documents")
         else:
             collection.insert_one(dataclass_to_dict(data))
             logging.info("Inserted 1 record into MongoDB")
@@ -67,15 +69,18 @@ def save_tokens(data):
         logging.error(f"Failed to insert data into MongoDB: {e}")
         raise
 
+
 def __to_document(item) -> dict:
     document = dataclass_to_dict(item)
     document['rnd_idx'] = random.randint(0, 100)
+
     return document
+
 
 def find_token(token: str):
     """could return None"""
     collection = get_mongo_connection(tokens_collection)
-    return collection.find_one({'token': token})
+    return collection.find_one({'word': token})
 
 
 def find_token_by_id(id: str, version: int):
@@ -87,7 +92,12 @@ def find_token_by_id(id: str, version: int):
 def find_all_tokens():
     collection = get_mongo_connection(tokens_collection)
 
-    return collection.find()
+    return collection.find().batch_size(100_000)
+
+def count_all_tokens() -> int:
+    collection = get_mongo_connection(tokens_collection)
+
+    return collection.count_documents({})
 
 
 def find_top_tokens(search_limit: int = 1000):
@@ -96,87 +106,22 @@ def find_top_tokens(search_limit: int = 1000):
     return collection.find().sort("frequency", -1).limit(search_limit)
 
 
-def open_change_stream(rem: int):
+def update_tokens_simple(data: Iterable[NewToken]):
     collection = get_mongo_connection(tokens_collection)
-    pipeline = [
-        # {"$match": {
-        #     "$expr": {
-        #         "$gt": [{"$bsonSize": "$$ROOT"}, 16*1024]  # Only documents larger than 4KB
-        #         # "$gt": [{"$bsonSize": "$$ROOT"}, 4 * 1024 * 1024]  # Only documents larger than 4MB
-        #     }
-        # }},
-        {"$match": {
-            "operationType": "update",
-            "$expr": {
-                "$eq": [{ "$mod": ["$fullDocument.rnd_idx", IMPORT['workers']] }, rem],
-            }
-        }},
-        {"$project": {"updateDescription": 0}}
 
-        # {"$match": {
-        #     "$or": [
-        #         {"$expr": {
-        #             "$and": [{
-        #                         "$ne": [
-        #                             {
-        #                                 "$getField": {
-        #                                     "field": "token_bag",
-        #                                     "input": { "$getField": { "field": "5", "input": "$stats" } }
-        #                                 }
-        #                             },
-        #                             None
-        #                         ]
-        #                     },
-        #                     {
-        #                         "$gt": [
-        #                             {
-        #                                 "$size": {
-        #                                     "$getField": {
-        #                                         "field": "token_bag",
-        #                                         "input": { "$getField": { "field": "5", "input": "$stats" } }
-        #                                     }
-        #                                 }
-        #                             },
-        #                             1000
-        #                         ]
-        #                     }
-        #                 # "$gt": [{"$bsonSize": "$$ROOT"}, 4*1024]  # Only documents larger than 4KB
-        #                 # "$gt": [{"$bsonSize": "$$ROOT"}, 1 * 1024 * 1024]  # Only documents larger than 4MB
-        #             ]
-        #         }},
-        #         {"$expr": {
-        #             "$and": [{
-        #                         "$ne": [
-        #                             {
-        #                                 "$getField": {
-        #                                     "field": "token_bag",
-        #                                     "input": { "$getField": { "field": "3", "input": "$stats" } }
-        #                                 }
-        #                             },
-        #                             None
-        #                         ]
-        #                     },
-        #                     {
-        #                         "$gt": [
-        #                             {
-        #                                 "$size": {
-        #                                     "$getField": {
-        #                                         "field": "token_bag",
-        #                                         "input": { "$getField": { "field": "3", "input": "$stats" } }
-        #                                     }
-        #                                 }
-        #                             },
-        #                             1000
-        #                         ]
-        #                     }
-        #                 # "$gt": [{"$bsonSize": "$$ROOT"}, 4*1024]  # Only documents larger than 4KB
-        #                 # "$gt": [{"$bsonSize": "$$ROOT"}, 1 * 1024 * 1024]  # Only documents larger than 4MB
-        #             ]
-        #         }}
-        #     ]
-        # }}
+    updates = [
+        UpdateOne(
+            {'token': token.word},
+            {
+                "$set": {"frequency": token.frequency},
+                "$inc": {"version": 1}
+            }
+        )
+        for token in data
     ]
-    return collection.watch(pipeline=pipeline, full_document="updateLookup")
+
+    result = collection.with_options(write_concern=update_write_concern).bulk_write(updates)
+    logging.info(f"Updated: {result.modified_count} documents")
 
 
 def update_token_neighbors(data: Iterable[Token]):
@@ -225,27 +170,38 @@ def very_quick_update(id: str, version: int, stats: list[Stats]):
         }
     )
 
-def update_token_counters(id: str, version: int, stats: list[Stats]):
+
+def update_token_counters(tokens: Iterable[NewToken]):
     collection = get_mongo_connection(tokens_collection)
 
-    set_stat_ops = {}
-    unset_bag_ops = {}
-    for s in stats:
-        set_stat_ops[f'stats.{s.window}.counter'] = s.counter
-        set_stat_ops[f'stats.{s.window}.token_bag'] = []
+    def set_counters_ops(token: NewToken) -> dict:
+        set_stat_ops = {}
+        for window, counter in token.stats.items():
+            set_stat_ops[f'stats.{window}'] = counter
 
-    result = collection.with_options(write_concern=update_write_concern).find_one_and_update(
-        {'_id': id, 'version': version},
-        {
-            "$inc": {"version": 1},
-            "$set": set_stat_ops,
-            "$unset": unset_bag_ops
-        }, return_document=ReturnDocument.AFTER
-    )
+        return set_stat_ops
 
-    if result:
-        logging.debug(f"Document updated: {result['token']}, v{version} -> v{result['version']}")
-    else:
-        logging.debug(f"Document {id}/v{version} was not updated")
+    updates = [
+        UpdateOne(
+            {'word': token.word, 'version': token.version},
+            {
+                "$set": {
+                    "frequency": token.frequency,
+                    "word_bag": [],
+                    **set_counters_ops(token)
+                },
+                "$inc": {"version": 1}
+            }
+
+        )
+        for token in tokens
+    ]
+
+    result = collection.with_options(write_concern=update_write_concern).bulk_write(updates)
+    # logging.info(f"Updated: {result.modified_count} documents")
+
+    if result.matched_count != len(updates):
+        logging.error("Some tokens were not found!")
+        # for e in result.bulk_api_result.values():
 
     return result

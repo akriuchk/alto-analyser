@@ -1,11 +1,12 @@
 import sqlite3
-from collections import Counter
+from collections.abc import Iterable
 
-from models import Token
+import config
+from models import NewToken, dict_to_dataclass
 
-from config import config
+config = config.Config()
 
-db_name = f"data/output_data/alto_30_confidence_{config.IMPORT['decade']}.db"
+db_name = f"data/output_data/alto_30_confidence_{config.decade}.db"
 token_stats_table = "token_stats"
 token_stats_table_columns = ["id",
                              "token",
@@ -15,25 +16,26 @@ token_stats_table_columns = ["id",
                              "w_31", "p_31", "w_32", "p_32", "w_33", "p_33",
                              "w_51", "p_51", "w_52", "p_52", "w_53", "p_53", "w_54", "p_54", "w_55", "p_55"]
 
+
 def get_connection():
-    return sqlite3.connect(db_name)
+    return sqlite3.connect(db_name, isolation_level=None)
+
 
 def create_sqlite_database():
     """ create a database connection to an SQLite database """
-    conn = None
-    try:
-        conn = get_connection()
-        print(sqlite3.sqlite_version)
+    with get_connection() as conn:
+        conn.execute('PRAGMA journal_mode = OFF;')
+        conn.execute('PRAGMA synchronous = 0;')
+        conn.execute('PRAGMA cache_size = 1000000;')  # give it a GB
+        conn.execute('PRAGMA locking_mode = EXCLUSIVE;')
+        conn.execute('PRAGMA temp_store = MEMORY;')
 
-        create_tables()
-    except sqlite3.Error as e:
-        print(e)
-    finally:
-        if conn:
-            conn.close()
+        create_tables(conn)
+
+        conn.commit()
 
 
-def create_tables():
+def create_tables(conn):
     print("create tables")
     sql_statements = [
         f"""CREATE TABLE IF NOT EXISTS {token_stats_table} (
@@ -65,15 +67,8 @@ def create_tables():
         );"""]
 
     # create a database connection
-    try:
-        with get_connection() as conn:
-            cursor = conn.cursor()
-            for statement in sql_statements:
-                cursor.execute(statement)
-
-            conn.commit()
-    except sqlite3.Error as e:
-        print(e)
+    for statement in sql_statements:
+        conn.execute(statement)
 
 
 # "token",
@@ -83,7 +78,7 @@ def create_tables():
 # "w_31", "p_31", "w_32", "p_32", "w_33", "p_33",
 # "w_51", "p_51", "w_52", "p_52", "w_53", "p_53", "w_54", "p_54", "w_55", "p_55"
 
-def add_token(decade: str, token: Token, probability: float):
+def add_token(decade: str, token: NewToken, probability: float):
     try:
         with get_connection() as conn:
             insert_columns = token_stats_table_columns[1:]
@@ -93,10 +88,10 @@ def add_token(decade: str, token: Token, probability: float):
                       VALUES({vals})"""
             cur = conn.cursor()
 
-            top_3 = token.stats[3].get_distance_prob(3)
-            top_5 = token.stats[5].get_distance_prob(5)
+            top_3 = token.get_stat_for_window(3, 3)
+            top_5 = token.get_stat_for_window(5, 5)
 
-            data = (token.token, decade, token.frequency, probability,
+            data = (token.word, decade, token.frequency, probability,
                     top_3[0][0],
                     top_3[0][1],
                     top_3[1][0],
@@ -122,3 +117,51 @@ def add_token(decade: str, token: Token, probability: float):
     except sqlite3.Error as e:
         print(f"ERROR: Failed to execute query sql:{sql}\ndata:{data}\ne: {e}")
 
+
+def write_token_batch(tokens: Iterable, total_tokens: int):
+    insert_columns = token_stats_table_columns[1:]
+    vals = "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?"
+
+    sql = f"""INSERT INTO {token_stats_table}({",".join(insert_columns)}) VALUES({vals})"""
+
+    # con.executemany('INSERT INTO user VALUES (NULL,?,?,?)', current_batch)
+    current_batch = []
+
+    for token_document in tokens:
+        token = dict_to_dataclass(token_document)
+        if token.word == 'redacted':
+            continue
+
+        probability = token.frequency / total_tokens
+        top_3 = token.get_stat_for_window(3, 3)
+        top_5 = token.get_stat_for_window(5, 5)
+
+        data = (token.word, config.decade, token.frequency, probability,
+                top_3[0][0],
+                top_3[0][1],
+                top_3[1][0],
+                top_3[1][1],
+                top_3[2][0],
+                top_3[2][1],
+
+                top_5[0][0],
+                top_5[0][1],
+                top_5[1][0],
+                top_5[1][1],
+                top_5[2][0],
+                top_5[2][1],
+                top_5[3][0],
+                top_5[3][1],
+                top_5[4][0],
+                top_5[4][1],
+                )
+        current_batch.append(data)
+
+    try:
+        with get_connection() as conn:
+            conn.execute('BEGIN')
+            conn.executemany(sql, current_batch)
+            conn.commit()
+
+    except sqlite3.Error as e:
+        print(f"ERROR: Failed to execute query sql:{sql}\ndata:{data}\ne: {e}")

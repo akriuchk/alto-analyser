@@ -1,3 +1,4 @@
+import logging
 from collections import Counter
 from dataclasses import dataclass, asdict, field
 
@@ -30,6 +31,42 @@ class Stats:
     def recalculate_distance_stats(self):
         self.counter.update(self.token_bag)
         self.token_bag.clear()
+
+@dataclass
+class NewToken:
+    word: str
+    word_bag: list[str]
+    stats: dict[int, Counter]
+    frequency: int = field(default=1)
+    version: int = field(default=1)
+    id: Optional[str] = field(default=None)
+
+    def get_stats(self, window: int) -> Counter:
+        result = self.stats.get(window)
+        if result is None:
+            result =  Counter()
+            self.stats[window] = result
+        return result
+
+
+    def get_stat_for_window(self, window: int, top_n: int) -> list:
+        """returns list of tuples"""
+        result = []
+        counter = self.get_stats(window)
+        total = counter.total()
+
+        for token, amount in counter.most_common(top_n):
+            result.append((token, amount / total))
+
+        for i in range(len(result), top_n):
+            result.append(('<none>', 0))
+
+        return result
+
+
+
+    def __hash__(self):
+        return hash(self.word)
 
 
 @dataclass
@@ -64,17 +101,12 @@ class Token:
         return hash(self.token)
 
 
-def dict_to_dataclass(data) -> Token:
+def dict_to_dataclass(data) -> NewToken:
     stats: dict[str, dict] = data['stats']
-    return Token(
-        token=data['token'],
-        stats={int(window): Stats(
-            window=int(window),
-            counter=Counter({t: count
-                     for t, count
-                     in stats_item['counter'].items()}),
-            token_bag=[]
-        ) for window, stats_item in stats.items() if stats_item.get('counter') is not None},
+    return NewToken(
+        word=data['word'],
+        stats={int(window): Counter(stats_item) for window, stats_item in stats.items() if stats_item is not None},
+        word_bag=[],
         frequency=data['frequency'],
         id=data['_id'],
         version=data['version']
