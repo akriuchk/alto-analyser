@@ -5,10 +5,10 @@ from itertools import batched
 from tqdm import tqdm
 
 from config import Config
-from models import Token, dict_to_dataclass, NewToken, dict_to_shallow_dataclass
-from persistence import mongo_client
-from persistence.IStorage import IStorage
-from persistence.cache import Cache
+from old.models import Token, dict_to_dataclass, NewToken, dict_to_shallow_dataclass
+from old import mongo_client
+from old.IStorage import IStorage
+from cache import Cache
 
 
 class Storage(IStorage):

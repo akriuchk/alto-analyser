@@ -5,22 +5,24 @@ from tqdm import tqdm
 from config import Config
 
 
+def hash_word(word):
+    return int(sha256(word.encode('utf-8')).hexdigest(), 16)
+
+
 class Dispatcher:
     def __init__(self, num_workers):
+        self.progress_bar = None
         config = Config()
         self.queues: list[Queue] = [Queue(maxsize=config.system_queue_size) for _ in range(num_workers)]
         self.num_workers = num_workers
         self.total_words = 0
 
-    def hash_word(self, word):
-        return int(sha256(word.encode('utf-8')).hexdigest(), 16)
-
     def dispatch(self, word: str, padded_max_window_word_sublist: list[str]):
-        if not hasattr(self, 'progress_bar'):
+        if self.progress_bar is None:
             # Initialize tqdm progress bar on first word dispatch
             self.progress_bar = tqdm(desc="Dispatching tokens", unit=" tokens", mininterval=8)
 
-        worker_id = self.hash_word(word) % self.num_workers
+        worker_id = hash_word(word) % self.num_workers
         target_queue = self.queues[worker_id]
 
         # if worker_id in {0, 1, 2}:
@@ -37,5 +39,5 @@ class Dispatcher:
     def shutdown(self):
         for q in self.queues:
             q.put(None)  # Signal for workers to stop
-        if hasattr(self, 'progress_bar'):
+        if self.progress_bar is not None:
             self.progress_bar.close()  # Close the progress bar at shutdown

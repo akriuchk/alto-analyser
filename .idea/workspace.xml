@@ -4,27 +4,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c873b008-0a2d-44c9-9c8c-1746787d152d" name="Changes" comment="v16 New arch with reader/workers. 1800 done in 1:09:18, on average 3382 lines/s (cleanup required)">
-      <change afterPath="$PROJECT_DIR$/.idea/alto.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/counter_db.py" afterDir="false" />
+    <list default="true" id="c873b008-0a2d-44c9-9c8c-1746787d152d" name="Changes" comment="v24. Failed to solve race condition - sometimes version of token is different in memory and mongo(performance is great btw)">
+      <change afterPath="$PROJECT_DIR$/src/store.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/analyzer/ngram_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/analyzer/ngram_analyzer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/counter_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/old/counter_db.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/dispatcher.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/dispatcher.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/persistence/IStorage.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/persistence/IStorage.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/persistence/cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/persistence/cache.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/persistence/mongo_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/persistence/mongo_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/persistence/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/persistence/storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/old/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/persistence/IStorage.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/old/IStorage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/persistence/cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/cache.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/persistence/mongo_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/old/mongo_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/persistence/sqlite_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/old/sqlite_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/persistence/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/old/storage.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/processor/text_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/processor/text_processor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/processor/update_processor.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/processor/zip_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/processor/zip_processor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/processor/xml_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/processor/xml_processor.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/reader.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/reader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/result_reporter.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/result_reporter.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/worker.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/worker.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -59,26 +57,26 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Docker.docker-compose-mongo-replicaset.yaml: Compose Deployment.executor": "Run",
-    "Docker.docker-compose.yaml.mongo-express: Compose Deployment.executor": "Run",
-    "Docker.docker-compose.yaml.mongodb: Compose Deployment.executor": "Run",
-    "Docker.docker-compose.yaml: Compose Deployment.executor": "Run",
-    "Python tests.Python tests for test_text_processor.Test.executor": "Run",
-    "Python tests.Python tests for test_text_processor.Test.test_find_ngrams.executor": "Run",
-    "Python tests.Python tests for test_text_processor.Test.test_find_ngrams_update.executor": "Debug",
-    "Python tests.Python tests for test_text_processor.Test.test_token_add.executor": "Debug",
-    "Python tests.Python tests for test_xml_reader.Test.executor": "Run",
-    "Python tests.Python tests for test_xml_reader.Test.test_extract_text_line.executor": "Debug",
-    "Python.main.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "/Users/akriuchk/PycharmProjects/alto",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Docker.docker-compose-mongo-replicaset.yaml: Compose Deployment.executor&quot;: &quot;Run&quot;,
+    &quot;Docker.docker-compose.yaml.mongo-express: Compose Deployment.executor&quot;: &quot;Run&quot;,
+    &quot;Docker.docker-compose.yaml.mongodb: Compose Deployment.executor&quot;: &quot;Run&quot;,
+    &quot;Docker.docker-compose.yaml: Compose Deployment.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_text_processor.Test.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_text_processor.Test.test_find_ngrams.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_text_processor.Test.test_find_ngrams_update.executor&quot;: &quot;Debug&quot;,
+    &quot;Python tests.Python tests for test_text_processor.Test.test_token_add.executor&quot;: &quot;Debug&quot;,
+    &quot;Python tests.Python tests for test_xml_reader.Test.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_xml_reader.Test.test_extract_text_line.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/akriuchk/PycharmProjects/alto&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
@@ -86,10 +84,10 @@
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src" />
+      <recent name="$PROJECT_DIR$/src/old" />
       <recent name="$PROJECT_DIR$/conf/scripts" />
       <recent name="$PROJECT_DIR$/src/processor" />
       <recent name="$PROJECT_DIR$/src/config" />
-      <recent name="$PROJECT_DIR$/test" />
     </key>
   </component>
   <component name="RunManager" selected="Python.main">
@@ -232,7 +230,8 @@
     <MESSAGE value="v12, stable work&#10;1639.53s: result size: 4970, next line 1517500, 8.59%, 1711.7 lines/s" />
     <MESSAGE value="v15 8004.85s: result size: 5001, next line 4607237, 26.09%, 1453.5 lines/s  (21gb WiredTigerHS.wt) failed with 'CollectionScan died due to position in capped collection being deleted'" />
     <MESSAGE value="v16 New arch with reader/workers. 1800 done in 1:09:18, on average 3382 lines/s (cleanup required)" />
-    <option name="LAST_COMMIT_MESSAGE" value="v16 New arch with reader/workers. 1800 done in 1:09:18, on average 3382 lines/s (cleanup required)" />
+    <MESSAGE value="v24. Failed to solve race condition - sometimes version of token is different in memory and mongo(performance is great btw)" />
+    <option name="LAST_COMMIT_MESSAGE" value="v24. Failed to solve race condition - sometimes version of token is different in memory and mongo(performance is great btw)" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -258,17 +257,17 @@
           <option name="timeStamp" value="35" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/persistence/storage.py</url>
+          <url>file://$PROJECT_DIR$/src/old/storage.py</url>
           <line>27</line>
           <option name="timeStamp" value="151" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/persistence/mongo_client.py</url>
+          <url>file://$PROJECT_DIR$/src/old/mongo_client.py</url>
           <line>256</line>
           <option name="timeStamp" value="192" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/persistence/mongo_client.py</url>
+          <url>file://$PROJECT_DIR$/src/old/mongo_client.py</url>
           <line>291</line>
           <option name="timeStamp" value="193" />
         </line-breakpoint>
@@ -281,10 +280,5 @@
         </breakpoint>
       </default-breakpoints>
     </breakpoint-manager>
-    <watches-manager>
-      <inline-watch fileUrl="file://$PROJECT_DIR$/src/processor/text_processor.py" line="60">
-        <watch expression="result_token" language="Python" />
-      </inline-watch>
-    </watches-manager>
   </component>
 </project>

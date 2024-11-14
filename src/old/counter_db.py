@@ -1,4 +1,3 @@
-import logging
 from collections import Counter
 from math import floor
 
@@ -25,7 +24,7 @@ class CounterDB(Counter):
     def _save_to_database(self, word, version, window, items: list[tuple[str, int]]):
         # logging.info(f"Saving [{word}] len(items)={len(items)} of counter to db")
 
-        from persistence.mongo_client import increment_token_counters #circullar imports
+        from old.mongo_client import increment_token_counters #circullar imports
         updates = {item[0]: item[1] for item in items}
 
         increment_token_counters(word, version, window, updates)

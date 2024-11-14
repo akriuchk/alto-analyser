@@ -2,6 +2,10 @@ import logging
 from typing import Iterator
 from lxml import etree
 
+from config import Config
+
+config = Config()
+
 default_str_attr: str = "CONTENT"
 full_str_attr: str = "SUBS_CONTENT"
 word_confidence_attr: str = "WC"
@@ -28,14 +32,14 @@ def extract_text_lines(xml: bytes) -> Iterator[str]:
                 continue
             if (full_str_attr in string_elem.attrib
                     and (len(sentence) == 0 or string_elem.attrib[full_str_attr] != sentence[-1])):
-                if float(string_elem.attrib[word_confidence_attr]) > 0.3:
+                if float(string_elem.attrib[word_confidence_attr]) > config.alto_confidence:
                     sentence.append(string_elem.attrib[full_str_attr])
                     add_confidence(string_elem)
                 else:
                     sentence.append("<redacted>")
 
             if default_str_attr in string_elem.attrib:
-                if float(string_elem.attrib[word_confidence_attr]) > 0.3:
+                if float(string_elem.attrib[word_confidence_attr]) > config.alto_confidence:
                     sentence.append(string_elem.attrib[default_str_attr])
                     add_confidence(string_elem)
                 else:

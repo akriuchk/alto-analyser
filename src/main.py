@@ -3,7 +3,7 @@ import logging
 from config import Config
 from reader import FileReader
 from dispatcher import Dispatcher
-from result_reporter import Reporter
+# from result_reporter import Reporter
 from worker import Worker
 
 
@@ -31,8 +31,8 @@ def main():
         for worker in workers:
             worker.join()
 
-    result_reporter = Reporter()
-    result_reporter.generate_report()
+    # result_reporter = Reporter()
+    # result_reporter.generate_report()
 
 
 if __name__ == "__main__":

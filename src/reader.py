@@ -10,6 +10,21 @@ from processor.xml_processor import extract_text_lines
 from processor.zip_processor import extract_xml_pages_from_zip
 
 
+def sub_list_with_padding(line: list[str], word_idx: int, window: int, padding: str) -> list[str]:
+    result: list[str] = []
+
+    min_idx_before = word_idx - window
+    max_idx_after = word_idx + window
+
+    for i in range(min_idx_before, max_idx_after + 1):
+        if 0 <= i < len(line):
+            result.append(line[i])
+        else:
+            result.append(padding)
+
+    return result
+
+
 class FileReader:
     def __init__(self, file_path: str, windows: list[int], dispatcher: Dispatcher):
         self.file_path = file_path
@@ -59,21 +74,5 @@ class FileReader:
     def __extract_tokens(self, line) -> tuple[str, list[str]]:
         words = remove_stop_words(tokenize(line))
         for word_idx, word in enumerate(words):
-            padded_max_window_word_sublist = self.__sub_list_with_padding(words, word_idx, max(self.windows), "<pad>")
-            # token: NewToken = NewToken(word=word, word_bag=padded_max_window_word_sublist,
-            #                            stats={window: Counter() for window in self.windows})
+            padded_max_window_word_sublist = sub_list_with_padding(words, word_idx, max(self.windows), "<pad>")
             yield word, padded_max_window_word_sublist
-
-    def __sub_list_with_padding(self, line: list[str], word_idx: int, window: int, padding: str) -> list[str]:
-        result: list[str] = []
-
-        min_idx_before = word_idx - window
-        max_idx_after = word_idx + window
-
-        for i in range(min_idx_before, max_idx_after + 1):
-            if 0 <= i < len(line):
-                result.append(line[i])
-            else:
-                result.append(padding)
-
-        return result

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Iterable
 
-from models import Token
+from old.models import Token
 
 
 class IStorage(ABC):

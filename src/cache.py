@@ -36,7 +36,7 @@ class Cache(OrderedDict):
             while len(self) > math.floor(self.cache_len * 0.75):
                 key, value = super().popitem(last=False)
                 overflow.append(value)
-            logging.info(f"cache overflow = {[t.word for  t in overflow]}")
+            # logging.info(f"cache overflow = {[t.word for  t in overflow]}")
             return overflow
 
     def __getitem__(self, key):

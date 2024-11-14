@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 import logging
 import sys
@@ -11,19 +12,22 @@ class Config:
         self.windows = [3, 5]
         self.output_folder = os.curdir
 
-        self.debug_limit_lines = 20_000
+        self.alto_confidence = 0.3
+        self.stop_words = {'a', 'an', 'the'}
+
+        self.debug_limit_lines = 400_000
         # self.debug_limit_lines = -1
 
         # self.system_workers = 1
-        self.system_workers = 6
+        self.system_workers = multiprocessing.cpu_count() - 1
         # self.system_queue_size = 10
         self.system_queue_size = 1000
-        # self.system_counter_dump_check_interval = 1000
-        self.system_counter_dump_check_interval = 5_000
+        self.system_counter_dump_check_interval = 20_000
+        # self.system_counter_dump_check_interval = 5_000
         self.system_counter_size_limit = 1_00
         # self.system_counter_size_limit = 100_000
-        # self.cache_max_size = 5000
-        self.cache_max_size = 5_00 #100_000 = 2.2gb per process
+        self.cache_max_size = 500_000
+        # self.cache_max_size = 5_00 #100_000 = 2.2gb per process
         self.cache_init_size = 10
         # self.cache_init_size = 10_000
 
@@ -31,7 +35,7 @@ class Config:
         self.mongo_login = os.getenv('MONGO_INITDB_ROOT_USERNAME', 'root')
         self.mongo_pw = os.getenv('MONGO_INITDB_ROOT_PASSWORD', 'example')
         self.mongo_db = os.getenv('MONGO_DB_NAME', 'alto')
-        self.mongo_collection = os.getenv('MONGO_COLL_NAME', 'tokens_1820_test_2')
+        self.mongo_collection = os.getenv('MONGO_COLL_NAME', '1820_test')
 
     def to_json(self):
         return self.__dict__
