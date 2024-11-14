@@ -16,7 +16,7 @@ class IStorage(ABC):
         pass
 
     @abstractmethod
-    def find(self, token: str) -> Token:
+    def find_shallow(self, token: str) -> Token:
         """Retrieve documents based on a query."""
         pass
 

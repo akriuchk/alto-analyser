@@ -11,7 +11,7 @@ def extract_xml_pages_from_zip(zip_path: PathLike[str]) -> Iterator[bytes]:
         for book_zip in decade_zip.infolist():
             if not book_zip.filename.endswith(".zip"):
                 continue
-            log.info(f"Open book-zip file '{book_zip.filename}'")
+            # log.info(f"Open book-zip file '{book_zip.filename}'")
             with decade_zip.open(book_zip.filename) as nested_zip_file:
                 with zipfile.ZipFile(nested_zip_file, 'r') as opened_book:
                     for zipped_entity in opened_book.infolist():

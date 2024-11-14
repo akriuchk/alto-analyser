@@ -5,3 +5,5 @@ pymongo==4.10.1
 
 regex~=2024.9.11
 tqdm~=4.66.5
+
+faster-fifo==1.4.7

@@ -1,11 +1,9 @@
 import logging
-from time import sleep
 
 from models import NewToken
 
 
 def analyze_word(token: NewToken):
-    # Dummy analysis function; replace with actual logic
     # logging.info(f"Analyzing word: {token}")
     token.frequency+=1
 
@@ -27,10 +25,11 @@ def analyze_word(token: NewToken):
             for window, counter in token.stats.items():
                 if distance <= window:
                     if word_before != '<pad>':
-                        counter.update([word_before])
+                        counter.update([word_before]) #todo refactor to do batch update(push work to CPython)
                     if word_after != '<pad>':
                         counter.update([word_after])
+            
 
         token.word_bag.clear()
     except Exception as e:
-        logging.error(f"Failed to process token: {token.word} with error {e}")
+        logging.error(f"Failed to process token: {token.word} with error {e}", exc_info=e)

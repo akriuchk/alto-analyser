@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="c873b008-0a2d-44c9-9c8c-1746787d152d" name="Changes" comment="v16 New arch with reader/workers. 1800 done in 1:09:18, on average 3382 lines/s (cleanup required)">
+      <change afterPath="$PROJECT_DIR$/.idea/alto.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/counter_db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/analyzer/ngram_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/analyzer/ngram_analyzer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/dispatcher.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/dispatcher.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/persistence/IStorage.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/persistence/IStorage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/persistence/cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/persistence/cache.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/persistence/mongo_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/persistence/mongo_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/persistence/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/persistence/storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/processor/text_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/processor/text_processor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/processor/update_processor.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/processor/zip_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/processor/zip_processor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/reader.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/reader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/worker.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/worker.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager">
+    <option name="groupingKeys">
+      <option value="directory" />
+    </option>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file:///opt/homebrew/Cellar/python@3.12/3.12.7_1/Frameworks/Python.framework/Versions/3.12/lib/python3.12/os.py" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2lz8YlbKHiGpEorv1cU7Z7VVyEu" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Docker.docker-compose-mongo-replicaset.yaml: Compose Deployment.executor": "Run",
+    "Docker.docker-compose.yaml.mongo-express: Compose Deployment.executor": "Run",
+    "Docker.docker-compose.yaml.mongodb: Compose Deployment.executor": "Run",
+    "Docker.docker-compose.yaml: Compose Deployment.executor": "Run",
+    "Python tests.Python tests for test_text_processor.Test.executor": "Run",
+    "Python tests.Python tests for test_text_processor.Test.test_find_ngrams.executor": "Run",
+    "Python tests.Python tests for test_text_processor.Test.test_find_ngrams_update.executor": "Debug",
+    "Python tests.Python tests for test_text_processor.Test.test_token_add.executor": "Debug",
+    "Python tests.Python tests for test_xml_reader.Test.executor": "Run",
+    "Python tests.Python tests for test_xml_reader.Test.test_extract_text_line.executor": "Debug",
+    "Python.main.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/akriuchk/PycharmProjects/alto",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/src/persistence" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src" />
+      <recent name="$PROJECT_DIR$/conf/scripts" />
+      <recent name="$PROJECT_DIR$/src/processor" />
+      <recent name="$PROJECT_DIR$/src/config" />
+      <recent name="$PROJECT_DIR$/test" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.main">
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <output_file path="$PROJECT_DIR$/logs/console.txt" is_save="true" />
+      <module name="alto" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="DEBUG_MODE" value="FALSE" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="false" />
+      <option name="ADD_SOURCE_ROOTS" value="false" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
+      <deployment type="docker-compose.yml">
+        <settings />
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration name="docker-compose-mongo-replicaset.yaml: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="sourceFilePath" value="docker-compose-mongo-replicaset.yaml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration name="docker-compose.yaml: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="sourceFilePath" value="docker-compose.yaml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for test_text_processor.Test" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="alto" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/test" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_text_processor.Test&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for test_text_processor.Test.test_find_ngrams" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="alto" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/test" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_text_processor.Test.test_find_ngrams&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for test_text_processor.Test.test_find_ngrams_update" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="alto" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/test" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_text_processor.Test.test_find_ngrams_update&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Docker.docker-compose-mongo-replicaset.yaml: Compose Deployment" />
+      <item itemvalue="Docker.docker-compose.yaml: Compose Deployment" />
+      <item itemvalue="Python.main" />
+      <item itemvalue="Python tests.Python tests for test_text_processor.Test" />
+      <item itemvalue="Python tests.Python tests for test_text_processor.Test.test_find_ngrams" />
+      <item itemvalue="Python tests.Python tests for test_text_processor.Test.test_find_ngrams_update" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Docker.docker-compose-mongo-replicaset.yaml: Compose Deployment" />
+        <item itemvalue="Python tests.Python tests for test_text_processor.Test.test_find_ngrams" />
+        <item itemvalue="Python tests.Python tests for test_text_processor.Test.test_find_ngrams_update" />
+        <item itemvalue="Python tests.Python tests for test_text_processor.Test" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-d7ad00fb9fc3-c546a90a8094-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.23726.102" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.csv" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="v.8(ThreadPool 16, python) 1253.42s: result size: 1458751, next page 220000 =&gt; 175 pages/s" />
+    <MESSAGE value="v.11 slow mongo 41806.68s: result size: 3871, next line 5635000,31.91%, 0.1 res/s" />
+    <MESSAGE value="mongo running in 1-replica set cluster" />
+    <MESSAGE value="update counters on CDC (3932.90s: result size: 4879, next line 762500, 4.32%, 14.9 lines/s)" />
+    <MESSAGE value="init cache on start" />
+    <MESSAGE value="v12, stable work&#10;1639.53s: result size: 4970, next line 1517500, 8.59%, 1711.7 lines/s" />
+    <MESSAGE value="v15 8004.85s: result size: 5001, next line 4607237, 26.09%, 1453.5 lines/s  (21gb WiredTigerHS.wt) failed with 'CollectionScan died due to position in capped collection being deleted'" />
+    <MESSAGE value="v16 New arch with reader/workers. 1800 done in 1:09:18, on average 3382 lines/s (cleanup required)" />
+    <option name="LAST_COMMIT_MESSAGE" value="v16 New arch with reader/workers. 1800 done in 1:09:18, on average 3382 lines/s (cleanup required)" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$USER_HOME$/Library/Caches/JetBrains/PyCharmCE2024.2/python_stubs/1140152926/lxml/etree/__init__.py</url>
+          <line>583</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/test/test_xml_reader.py</url>
+          <line>9</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/test/test_xml_reader.py</url>
+          <line>8</line>
+          <option name="timeStamp" value="17" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/test/test_text_processor.py</url>
+          <line>27</line>
+          <option name="timeStamp" value="35" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/persistence/storage.py</url>
+          <line>27</line>
+          <option name="timeStamp" value="151" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/persistence/mongo_client.py</url>
+          <line>256</line>
+          <option name="timeStamp" value="192" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/persistence/mongo_client.py</url>
+          <line>291</line>
+          <option name="timeStamp" value="193" />
+        </line-breakpoint>
+      </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <inline-watch fileUrl="file://$PROJECT_DIR$/src/processor/text_processor.py" line="60">
+        <watch expression="result_token" language="Python" />
+      </inline-watch>
+    </watches-manager>
+  </component>
+</project>

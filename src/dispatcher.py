@@ -1,9 +1,8 @@
 from hashlib import sha256
-from multiprocessing import Queue
+from faster_fifo import Queue
 
 from tqdm import tqdm
 from config import Config
-from models import NewToken
 
 
 class Dispatcher:
@@ -16,16 +15,19 @@ class Dispatcher:
     def hash_word(self, word):
         return int(sha256(word.encode('utf-8')).hexdigest(), 16)
 
-    def dispatch(self, token: NewToken):
+    def dispatch(self, word: str, padded_max_window_word_sublist: list[str]):
         if not hasattr(self, 'progress_bar'):
             # Initialize tqdm progress bar on first word dispatch
             self.progress_bar = tqdm(desc="Dispatching tokens", unit=" tokens", mininterval=8)
 
-        worker_id = self.hash_word(token.word) % self.num_workers
+        worker_id = self.hash_word(word) % self.num_workers
         target_queue = self.queues[worker_id]
 
+        # if worker_id in {0, 1, 2}:
+            # logging.info(f"worker has been stopped for retest {worker_id}")
+            # return
         # Wait to add to queue if it's full
-        target_queue.put(token, block=True)
+        target_queue.put(padded_max_window_word_sublist, block=True, timeout=60_000)
         self.total_words += 1
         self.progress_bar.update(1)  # Update the word processing progress
 

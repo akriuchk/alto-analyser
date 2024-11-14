@@ -4,6 +4,10 @@ from dataclasses import dataclass, asdict, field
 
 from typing import Optional
 
+from config import Config
+from counter_db import CounterDB
+
+config = Config()
 
 @dataclass
 class Stats:
@@ -36,7 +40,7 @@ class Stats:
 class NewToken:
     word: str
     word_bag: list[str]
-    stats: dict[int, Counter]
+    stats: dict[int, CounterDB]
     frequency: int = field(default=1)
     version: int = field(default=1)
     id: Optional[str] = field(default=None)
@@ -44,7 +48,7 @@ class NewToken:
     def get_stats(self, window: int) -> Counter:
         result = self.stats.get(window)
         if result is None:
-            result =  Counter()
+            result =  CounterDB()
             self.stats[window] = result
         return result
 
@@ -63,6 +67,15 @@ class NewToken:
 
         return result
 
+    def cleanup_counters(self):
+        updated_list = []
+        for window, counter in self.stats.items():
+            updated = counter.cleanup_tail(self.word,self.version, window)
+            if updated:
+                updated_list.append((self.word, self.version))
+                self.version += 1
+        if len(updated_list)>0:
+            logging.info(f"cleanup_counters of {updated_list}")
 
 
     def __hash__(self):
@@ -105,7 +118,17 @@ def dict_to_dataclass(data) -> NewToken:
     stats: dict[str, dict] = data['stats']
     return NewToken(
         word=data['word'],
-        stats={int(window): Counter(stats_item) for window, stats_item in stats.items() if stats_item is not None},
+        stats={int(window): CounterDB(stats_item) for window, stats_item in stats.items() if stats_item is not None},
+        word_bag=[],
+        frequency=data['frequency'],
+        id=data['_id'],
+        version=data['version']
+    )
+
+def dict_to_shallow_dataclass(data) -> NewToken:
+    return NewToken(
+        word=data['word'],
+        stats={window: CounterDB() for window in config.windows},
         word_bag=[],
         frequency=data['frequency'],
         id=data['_id'],

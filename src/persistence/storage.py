@@ -5,7 +5,7 @@ from itertools import batched
 from tqdm import tqdm
 
 from config import Config
-from models import Token, dict_to_dataclass, NewToken
+from models import Token, dict_to_dataclass, NewToken, dict_to_shallow_dataclass
 from persistence import mongo_client
 from persistence.IStorage import IStorage
 from persistence.cache import Cache
@@ -18,7 +18,7 @@ class Storage(IStorage):
 
         if cache:
             logging.info(f"init storage with cache_len={self.config.cache_max_size}")
-            self.token_cache = Cache(cache_len=self.config.cache_max_size)
+            self.token_cache: Cache[str, NewToken] = Cache(cache_len=self.config.cache_max_size)
 
             for t in mongo_client.find_top_tokens(self.config.cache_init_size):
                 try:
@@ -44,7 +44,7 @@ class Storage(IStorage):
     def count_all(self) -> int:
         return mongo_client.count_all_tokens()
 
-    def find(self, word: str) -> NewToken:
+    def find_shallow(self, word: str) -> NewToken:
         result: NewToken = self.token_cache.get(word)
         if result is not None:
             return result
@@ -52,15 +52,13 @@ class Storage(IStorage):
             try:
                 document = mongo_client.find_token(word)
                 if document:
-                    result = dict_to_dataclass(document)
+                    result = dict_to_shallow_dataclass(document)
             except Exception as e:
                 logging.error(f"failed to serialize json to Token class: {e}")
                 raise
 
         if result:
-            pushed_out = self.token_cache.set(word, result)
-            if pushed_out:
-                mongo_client.update_token_counters([pushed_out])
+            self.token_cache.set(word, result)
 
         return result
 
@@ -84,6 +82,11 @@ class Storage(IStorage):
 
     def delete_all(self) -> None:
         pass
+
+    def trim_cache(self):
+        overflow_items = self.token_cache.pop_overflow()
+        if overflow_items and len(overflow_items) > 0:
+            mongo_client.update_token_counters(overflow_items)
 
     def get_cache_stats(self) -> dict:
         return self.token_cache.get_cache_stats()

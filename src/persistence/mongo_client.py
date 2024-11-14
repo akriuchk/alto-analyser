@@ -2,20 +2,20 @@ import logging
 import random
 from collections.abc import Iterable
 
-from pymongo import MongoClient, ASCENDING, UpdateOne, ReturnDocument, WriteConcern
+from pymongo import MongoClient, ASCENDING, UpdateOne, WriteConcern
 
 from config import Config
 from models import dataclass_to_dict, Token, Stats, NewToken
 
-tokens_collection = 'tokens_1810'
-
 _db: MongoClient = None
+
 config = Config()
+tokens_collection = config.mongo_collection
 
 update_write_concern = WriteConcern(w=1)  # https://www.mongodb.com/docs/manual/reference/write-concern/
 
 
-def get_mongo_connection(collection: str):
+def __get_mongo_connection(collection: str):
     global _db
     if _db is None:
         try:
@@ -43,7 +43,7 @@ def get_mongo_connection(collection: str):
 
 def __ensure_tokens_token_unique_idx():
     try:
-        get_mongo_connection(tokens_collection).create_index(
+        __get_mongo_connection(tokens_collection).create_index(
             [("word", ASCENDING)],
             unique=True,
             name="tokens_word_unique_idx"
@@ -54,7 +54,7 @@ def __ensure_tokens_token_unique_idx():
 
 
 def save_tokens(data):
-    collection = get_mongo_connection(tokens_collection)
+    collection = __get_mongo_connection(tokens_collection)
     try:
         if isinstance(data, Iterable):
             logging.debug(f"Start to convert data to json")
@@ -79,35 +79,36 @@ def __to_document(item) -> dict:
 
 def find_token(token: str):
     """could return None"""
-    collection = get_mongo_connection(tokens_collection)
-    return collection.find_one({'word': token})
+    collection = __get_mongo_connection(tokens_collection)
+    return collection.find_one({'word': token}, projection=['word', 'frequency', 'version'])
 
 
 def find_token_by_id(id: str, version: int):
     """could return None"""
-    collection = get_mongo_connection(tokens_collection)
+    collection = __get_mongo_connection(tokens_collection)
     return collection.find_one({'_id': id, 'version': version})
 
 
 def find_all_tokens():
-    collection = get_mongo_connection(tokens_collection)
+    collection = __get_mongo_connection(tokens_collection)
 
     return collection.find().batch_size(100_000)
 
+
 def count_all_tokens() -> int:
-    collection = get_mongo_connection(tokens_collection)
+    collection = __get_mongo_connection(tokens_collection)
 
     return collection.count_documents({})
 
 
 def find_top_tokens(search_limit: int = 1000):
-    collection = get_mongo_connection(tokens_collection)
+    collection = __get_mongo_connection(tokens_collection)
 
     return collection.find().sort("frequency", -1).limit(search_limit)
 
 
 def update_tokens_simple(data: Iterable[NewToken]):
-    collection = get_mongo_connection(tokens_collection)
+    collection = __get_mongo_connection(tokens_collection)
 
     updates = [
         UpdateOne(
@@ -125,7 +126,7 @@ def update_tokens_simple(data: Iterable[NewToken]):
 
 
 def update_token_neighbors(data: Iterable[Token]):
-    collection = get_mongo_connection(tokens_collection)
+    collection = __get_mongo_connection(tokens_collection)
 
     # "$push": {"stats.3.distance_stat.1": new_value}
 
@@ -153,7 +154,7 @@ def update_token_neighbors(data: Iterable[Token]):
 
 
 def very_quick_update(id: str, version: int, stats: list[Stats]):
-    collection = get_mongo_connection(tokens_collection)
+    collection = __get_mongo_connection(tokens_collection)
     set_stat_ops = {}
     unset_bag_ops = {}
 
@@ -172,36 +173,145 @@ def very_quick_update(id: str, version: int, stats: list[Stats]):
 
 
 def update_token_counters(tokens: Iterable[NewToken]):
-    collection = get_mongo_connection(tokens_collection)
+    collection = __get_mongo_connection(tokens_collection)
+    if len(tokens) != len(set(tokens)):
+        logging.error("len(tokens) != len(set(tokens))")
 
-    def set_counters_ops(token: NewToken) -> dict:
+    def inc_counters_ops(t: NewToken) -> dict:
         set_stat_ops = {}
-        for window, counter in token.stats.items():
-            set_stat_ops[f'stats.{window}'] = counter
+        for window, counter in t.stats.items():
+            for word, count in counter.items():
+                set_stat_ops[f'stats.{window}.{word}'] = count
 
         return set_stat_ops
 
-    updates = [
-        UpdateOne(
+    update_batch = []
+    inc_counter = 0
+    inc_limit = 50_000
+
+    for token in tokens:
+        counter_increments = inc_counters_ops(token)
+
+        update_batch.append(UpdateOne(
             {'word': token.word, 'version': token.version},
             {
                 "$set": {
                     "frequency": token.frequency,
-                    "word_bag": [],
-                    **set_counters_ops(token)
+                    "word_bag": []
                 },
-                "$inc": {"version": 1}
+                "$inc": {
+                    "version": 1,
+                    **counter_increments
+                }
             }
+        ))
 
-        )
-        for token in tokens
-    ]
+        inc_counter += len(counter_increments)
+        if inc_counter >= inc_limit:
+            logging.info(f"Execute bulk_write: len(update_batch)={len(update_batch)}, inc_counter={inc_counter}")
 
-    result = collection.with_options(write_concern=update_write_concern).bulk_write(updates)
+            for update in update_batch:
+                update_search_query = update._filter
+
+                stored_token = find_token(update_search_query['word'])
+
+                if update_search_query['version'] != stored_token['version']:
+                    logging.info(f"missmatch: {update_search_query} != {stored_token}")
+
+                    for tkn in tokens:
+                        if update_search_query['word'] == tkn.word:
+                            logging.info(f"token: {tkn}")
+
+            result = collection.with_options(write_concern=update_write_concern).bulk_write(update_batch)
+            if result.matched_count != len(update_batch):
+                logging.error("Some tokens were not found!")
+                logging.info(f"updates={len(update_batch)}, result:{result.bulk_api_result}")
+                # logging.info(f"update_batch: {update_batch}")
+
+                for update in update_batch:
+                    update_search_query = update._filter
+
+                    stored_token = find_token(update_search_query['word'])
+
+                    if update_search_query['version'] == stored_token['version']:
+                        logging.info(f"missmatch: {update_search_query} == {stored_token}")
+
+                # for e in result.bulk_api_result.values():
+            update_batch = []
+            inc_counter = 0
+    if len(update_batch) > 0:
+        if len(update_batch) > 1:
+            logging.info(f"Execute bulk_write of overflow: len(update_batch)={len(update_batch)}, inc_counter={inc_counter}")
+
+        for update in update_batch:
+            update_search_query = update._filter
+
+            stored_token = find_token(update_search_query['word'])
+
+            if update_search_query['version'] != stored_token['version']:
+                logging.info(f"missmatch: {update_search_query} != {stored_token}")
+
+
+        result = collection.with_options(write_concern=update_write_concern).bulk_write(update_batch)
+        if result.matched_count != len(update_batch):
+            logging.error("Some tokens were not found!1")
+            logging.info(f"result: {result.bulk_api_result}")
+            # logging.info(f"update_batch: {update_batch}")
+
+            for update in update_batch:
+                update_search_query = update._filter
+
+                stored_token = find_token(update_search_query['word'])
+
+                if update_search_query['version'] == stored_token['version']:
+                    logging.info(f"missmatch: {update_search_query} == {stored_token}")
+
     # logging.info(f"Updated: {result.modified_count} documents")
 
-    if result.matched_count != len(updates):
-        logging.error("Some tokens were not found!")
-        # for e in result.bulk_api_result.values():
 
-    return result
+def increment_token_counters(word: str, version: int, window: int, counters: dict[str, int]):
+    collection = __get_mongo_connection(tokens_collection)
+
+    inc_stat_ops = {}
+    for w, count in counters.items():
+        inc_stat_ops[f'stats.{window}.{w}'] = count
+
+    updates = [
+        UpdateOne(
+            {'word': word, 'version': version},
+            {"$inc": {
+                "version": 1,
+                **inc_stat_ops
+            }}
+        )
+    ]
+
+    # logging.info(f"Execute bulk_write of token_counters for '{word}': len(counters)={len(counters)}, updates={len(updates)}")
+    result = collection.with_options(write_concern=update_write_concern).bulk_write(updates)
+    if result.matched_count != len(updates):
+        logging.error("Some tokens were not found!2")
+
+
+# def increment_token_counters(temp_token: NewToken):
+#     collection = __get_mongo_connection(tokens_collection)
+#
+#     def get_inc_ops(token: NewToken) -> dict:
+#         inc_stat_ops = {}
+#         for window, counter in token.stats.items():
+#             for word, count in counter.items():
+#                 inc_stat_ops[f'stats.{window}.{word}'] = count
+#         return inc_stat_ops
+#
+#     updates = [
+#         UpdateOne(
+#             {'word': temp_token.word, 'version': temp_token.version},
+#             {"$inc": {
+#                 "version": 1,
+#                 **get_inc_ops(temp_token)
+#             }}
+#         )
+#     ]
+#
+#     result = collection.with_options(write_concern=update_write_concern).bulk_write(updates)
+#     if result.matched_count != len(updates):
+#         logging.error("Some tokens were not found!")

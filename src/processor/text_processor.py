@@ -53,7 +53,7 @@ def collect_window_stats(result: dict[str, Token], tokens: list[str], windows: l
 
             result_token: Token = result.get(token)
             if result_token is None:
-                result_token = storage.find(token)
+                result_token = storage.find_shallow(token)
                 result[token] = result_token
             if result_token is None:
                 result_token = Token(token, {window: Stats(window, Counter(), []) for window in windows}, 0)
