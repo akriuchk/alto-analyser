@@ -27,8 +27,8 @@ class Cache(OrderedDict):
 
     def set(self, key, value):
         super().__setitem__(key, value)
-        if len(self) == self.cache_len:
-            logging.info(f"cache limit reached {self.cache_len}, do cleanup")
+        # if len(self) == self.cache_len:
+        #     logging.debug(f"cache limit reached {self.cache_len}, do cleanup")
 
     def pop_overflow(self) -> dict:
         if len(self) >= self.cache_len:

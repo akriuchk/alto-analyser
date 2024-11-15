@@ -7,4 +7,3 @@ regex~=2024.9.11
 tqdm~=4.66.5
 
 faster-fifo==1.4.7
-unqlite==0.9.7
