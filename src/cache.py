@@ -30,12 +30,12 @@ class Cache(OrderedDict):
         if len(self) == self.cache_len:
             logging.info(f"cache limit reached {self.cache_len}, do cleanup")
 
-    def pop_overflow(self) -> list:
+    def pop_overflow(self) -> dict:
         if len(self) >= self.cache_len:
-            overflow = []
+            overflow = {}
             while len(self) > math.floor(self.cache_len * 0.75):
                 key, value = super().popitem(last=False)
-                overflow.append(value)
+                overflow[key] = value
             # logging.info(f"cache overflow = {[t.word for  t in overflow]}")
             return overflow
 

@@ -45,7 +45,7 @@ class Worker(Process):
             try:
                 self.analyze_word(sublist)
             except Exception as ex:
-                logging.error(f"Failed to process token {sublist} with error", ex)
+                logging.error(f'Failed to process token {sublist} with error', ex)
                 self.print_info()
                 self.close()
                 raise ex
@@ -58,8 +58,11 @@ class Worker(Process):
         windows = self.config.windows
         middle_idx = max(windows)
         word = sublist[middle_idx]
+
+        self.store.increment_word_freq(word)
         if word == 'redacted':
             return
+
 
         for distance in range(1, max(windows)):
 
