@@ -1,5 +1,6 @@
 import logging
 import sqlite3
+from collections import defaultdict
 from itertools import batched
 
 from config import Config
@@ -41,7 +42,7 @@ class SqliteClient:
         logging.info("create tables")
         #lang=SQL
         sql_statements = [
-            """CREATE TABLE IF NOT EXISTS tokens (
+            """CREATE TABLE IF NOT EXISTS report (
                     id INTEGER KEY,
                     word TEXT NOT NULL,
                     decade TEXT,
@@ -69,12 +70,9 @@ class SqliteClient:
                     id INTEGER PRIMARY KEY,
                     name TEXT NOT NULL
             );""",
-            """CREATE TABLE IF NOT EXISTS token_neighbors(
-                word TEXT NOT NULL,
-                window INTEGER NOT NULL,
-                neighbor TEXT NOT NULL,
-                frequency INT NOT NULL DEFAULT 0,
-                PRIMARY KEY (word, window, neighbor)
+            """CREATE TABLE IF NOT EXISTS token (
+                word TEXT PRIMARY KEY,
+                value JSON
             )"""
         ]
 
@@ -178,7 +176,7 @@ class SqliteClient:
     #     except sqlite3.Error as e:
     #         print(f"ERROR: Failed to execute query sql:{sql}\ndata:{data}\ne: {e}")
     def append_words(self, word_counter: dict[str, int]):
-        sql = f"""INSERT INTO tokens(word, frequency) VALUES(?,?)
+        sql = f"""INSERT INTO report(word, frequency) VALUES(?,?)
                 ON CONFLICT(word) DO UPDATE SET frequency=frequency+excluded.frequency
                 """
 
@@ -194,21 +192,38 @@ class SqliteClient:
                 print(f"ERROR: Failed to execute query sql:{sql}\ndata:{current_batch}\ne: {e}")
 
     def append_neighbor_counters(self, token_neighbor_counters: list[TokenCounter]):
-        sql = f"""INSERT INTO token_neighbors(word,window,neighbor,frequency) VALUES(?,?,?,?)
-                ON CONFLICT(word,window,neighbor) DO UPDATE SET frequency=frequency+excluded.frequency
-                """
+        # sql_temp = """UPDATE token
+        #                 SET
+        #                     value = json_insert(
+        #                     value,
+        #                     '$.5.aboba[#]', 2,
+        #                     '$.3.mcdac[#]', 3
+        #                   )
+        #                 WHERE
+        #                   word = 'hello';
+        #                 """
 
-        for batch in batched(token_neighbor_counters, 250_000):
-            current_batch = []
-            for counter in batch:
-                current_batch.append((counter.word, counter.window, counter.neighbor, counter.neighbor_frequency))
+        updates: dict[str:list] = defaultdict(list)
+        for counter in token_neighbor_counters:
+            updates[counter.word].append(f'$.{counter.window}.{counter.neighbor}[#]')
+            updates[counter.word].append(f'{counter.neighbor_frequency}')
 
+        def log_sql_callback(statement):
+            print("Executing SQL statement:", statement)
+
+        with self.get_connection() as conn:
             try:
-                with self.get_connection() as conn:
-                    conn.execute('BEGIN')
-                    conn.executemany(sql, current_batch)
-                    conn.commit()
+                conn.execute('BEGIN')
+                # conn.set_trace_callback(log_sql_callback)
+                conn.executemany("INSERT OR IGNORE INTO token(word, value) VALUES(?, ?)", [(w,'{}')  for w in updates.keys()])
+                for word, update_tuple in updates.items():
+                    for batch in batched(update_tuple, 60):
+                        sql = f'UPDATE token SET value = jsonb_insert(value {",?" * len(batch)}) WHERE word = ?;'
+                        u = list(batch);u.append(word)
 
+                        conn.executemany(sql, [u])
+                conn.commit()
             except sqlite3.Error as e:
-                print(f"ERROR: Failed to execute query sql:{sql}\ndata:{current_batch}\ne: {e}")
+                print(f"ERROR: Failed to execute query sql:{sql}\ndata:{update_tuple}\ne: {e}")
+                raise e
 

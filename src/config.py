@@ -15,16 +15,16 @@ class Config:
         self.alto_confidence = 0.3
         self.stop_words = {'a', 'an', 'the'}
 
-        # self.debug_limit_lines = 100_000
+        # self.debug_limit_lines = 1_000_000
         self.debug_limit_lines = -1
 
         # self.system_workers = 1
-        self.system_workers = multiprocessing.cpu_count() - 1
+        self.system_workers = multiprocessing.cpu_count()-1
         # self.system_queue_size = 10
         self.system_queue_size = 1000
+        # self.system_counter_dump_check_interval = 10000
         self.system_counter_dump_check_interval = 100_000
-        # self.system_counter_dump_check_interval = 20_000
-        self.system_counter_size_limit = 1_00
+        self.system_counter_size_limit = 1
         # self.system_counter_size_limit = 100_000
         self.cache_max_size = 2_500_000
         # self.cache_max_size = 1_000_000

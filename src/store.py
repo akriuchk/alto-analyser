@@ -119,7 +119,7 @@ class Store:
             start_process_time = time.time()
             self.is_empty = False
             self._append(overflow.values())
-            logging.info(f"Overflow of {len(overflow)} items dumped in {time.time() - start_process_time}ms")
+            logging.info(f"Overflow of {len(overflow)} items dumped in {time.time() - start_process_time:03f}s")
 
         word_overflow: dict[str, int] = self.word_counter.pop_overflow()
         if word_overflow and len(word_overflow) > 0:
