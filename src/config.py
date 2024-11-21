@@ -5,37 +5,34 @@ import sys
 
 
 class Config:
-
     def __init__(self):
-        self.file_path = 'data/1800_books/1820_1829.zip'
-        self.decade = os.getenv('IMPORT_DECADE', '1820_1829_test_2')
-        self.windows = [3, 5]
-        self.output_folder = os.curdir
+        self.archive_path = 'data/in/1820_1829.zip'
+        self.output_path = 'data/out'
+        self.decade = '1820_1829'
+        self.windows = {3, 5}
 
         self.alto_confidence = 0.3
         self.stop_words = {'a', 'an', 'the'}
+        self.filter = {'when', 'under', 'kind', 'first', 'my', 'good', 'you', 'die', 'some', 'great', 'your', 'love', 'heart', 'war'}
+        self.neighbour_filter = {'redacted', 'a', 'an', 'the'}
 
-        # self.debug_limit_lines = 1_000_000
+        # self.debug_limit_lines = 260000
         self.debug_limit_lines = -1
 
         # self.system_workers = 1
-        self.system_workers = multiprocessing.cpu_count()-1
+        self.system_workers = multiprocessing.cpu_count() - 1
         # self.system_queue_size = 10
         self.system_queue_size = 1000
-        # self.system_counter_dump_check_interval = 10000
-        self.system_counter_dump_check_interval = 100_000
-        self.system_counter_size_limit = 1
-        # self.system_counter_size_limit = 100_000
+        # self.system_counter_dump_check_interval = 100_000
+        self.system_counter_dump_check_interval = 20_000
         self.cache_max_size = 2_500_000
         # self.cache_max_size = 1_000_000
         self.cache_init_size = 10
-        # self.cache_init_size = 10_000
 
-        self.mongo_host = os.getenv('MONGO_URI', 'localhost:27017')
-        self.mongo_login = os.getenv('MONGO_INITDB_ROOT_USERNAME', 'root')
-        self.mongo_pw = os.getenv('MONGO_INITDB_ROOT_PASSWORD', 'example')
-        self.mongo_db = os.getenv('MONGO_DB_NAME', 'alto')
-        self.mongo_collection = os.getenv('MONGO_COLL_NAME', '1820_test')
+        self.db_name = 'alto'
+
+        os.makedirs(self.output_path, exist_ok=True)
+
 
     def to_json(self):
         return self.__dict__

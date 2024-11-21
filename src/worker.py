@@ -26,6 +26,7 @@ class Worker(Process):
     def run(self):
         logging.info(f'Worker[id={self.worker_id}] process started on pid[{os.getpid()}]')
         self.start_time = time.time()
+        self.store.init_db()
 
         while True:
             sublist = self.queue.get(timeout=60_000)
@@ -57,9 +58,14 @@ class Worker(Process):
     def analyze_word(self, sublist):
         windows = self.config.windows
         middle_idx = max(windows)
-        word = sublist[middle_idx]
+        word: str = sublist[middle_idx]
 
         self.store.increment_word_freq(word)
+
+        word_filter = self.config.filter
+        if word.lower() not in word_filter:
+            return
+
         if word == 'redacted':
             return
 

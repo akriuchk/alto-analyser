@@ -13,7 +13,7 @@ class Dispatcher:
     def __init__(self, num_workers):
         self.progress_bar = None
         config = Config()
-        self.queues: list[Queue] = [Queue(maxsize=config.system_queue_size) for _ in range(num_workers)]
+        self.queues: list[Queue] = [Queue(maxsize=config.system_queue_size) for _ in range(1, num_workers + 1)]
         self.num_workers = num_workers
         self.total_words = 0
 
@@ -22,7 +22,7 @@ class Dispatcher:
             # Initialize tqdm progress bar on first word dispatch
             self.progress_bar = tqdm(desc="Dispatching tokens", unit=" tokens", mininterval=8)
 
-        worker_id = hash_word(word) % self.num_workers
+        worker_id = hash_word(word.lower()) % self.num_workers
         target_queue = self.queues[worker_id]
 
         # if worker_id in {0, 1, 2}:

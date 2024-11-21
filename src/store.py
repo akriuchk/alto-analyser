@@ -1,5 +1,6 @@
 import logging
 import time
+from collections import Counter
 
 from tqdm import tqdm
 
@@ -19,76 +20,37 @@ class Store:
         self.db: SqliteClient = None
         self.is_empty = True
 
-    def _init_db(self):
+    def init_db(self):
         self.db = SqliteClient(self.worker_id)
-        self.db.create_sqlite_database()
+        self.db.create_sqlite_database(None)
 
     def reduce_stored_counters(self):
         logging.info("reduce_stored_counters...")
-        progress_bar = tqdm(desc="Reduce counters", unit=" counters", leave=True)
 
-        words = []
+        tokens: list[str] = self.db.fetch_analysed_tokens()
 
-        # with self.db.cursor() as cursor:
-        #     line = 0
-        #     for key, value in cursor:
-        #         line += 1
-        #         if key[0:3] == "wf_":
-        #             continue
-        #
-        #         key_parts = key.split(".")
-        #
-        #         if len(key_parts) == 1:
-        #             try:
-        #                 words.append(key)
-        #                 self.db[key] = sum(int(i) for i in value.decode().split(",") if len(i) > 0)
-        #             except ValueError:
-        #                 if key != 'dc_neighbors':
-        #                     logging.error("wtf %s", key, value)
-        #         else:
-        #             freq = sum(int(i) for i in value.decode().split(",") if len(i) > 0)
-        #             # store_batch.append({
-        #             #     'key': key,
-        #             #     'word': key_parts[0],
-        #             #     'window': int(key_parts[1]),
-        #             #     'neighbor': key_parts[2],
-        #             #     'freq': freq
-        #             # })
-        #             try:
-        #                 self.db.append(f'wf_{key_parts[0]}.{key_parts[1]}', f'{key_parts[2]}.{freq}')
-        #             except:
-        #                 logging.info(self.db[f'wf_{key_parts[0]}.{key_parts[1]}'])
-        #                 logging.info(f'wf_{key_parts[0]}.{key_parts[1]}')
-        #                 logging.info(f'{key_parts[2]}:{freq};')
-        #                 logging.info(line)
-        #                 raise
-        #             # del self.db[key]
-        #         progress_bar.update(1)
-        #
-        #         # neighbors.store(store_batch)
+        with tqdm(desc=f"[{self.worker_id}]Reduce counters", total=len(tokens), unit=" counters", leave=True) as pbar:
+            for token in tokens:
+                pbar.update(1)
 
-        logging.info("reduced...")
-        # len(words)
-        # words_collection = self.db.collection('dc_words')
-        # words_collection.create()
-        #
-        # for word in words:
-        #     for window in self.config.windows:
-        #         # counters = neighbors.filter(lambda counter: counter['word'] == word and counter['window'] == window)
-        #         counter = Counter({c['neighbor']: c['freq'] for c in counters})
-        #         del counter['redacted']
-        #         top_5 = counter.most_common(5)
-        #         logging.info(f'{word}.{window}: {top_5}')
+                token_window_neighbor_sum: dict[int, int] = self.db.get_token_window_neighbor_sum(token)
 
-    def close(self):
-        logging.info("closing")
-        self._append(self.cache.values())
-        self._append_words(self.word_counter)
-        logging.info("clean cache")
-        self.cache.clear()
-        self.reduce_stored_counters()
-        logging.info("store closed")
-        # self.db.close()
+                token_stats: dict = {"word": token}
+                for window in self.config.windows:
+                    top_n_neighbors: dict[str, int] = self.db.get_top_n_neighbors(token, window)
+
+                    for idx, (neighbor, frequency) in enumerate(top_n_neighbors.items()):
+                        token_stats[f'w_{window}{idx + 1}'] = neighbor
+                        token_stats[f'p_{window}{idx + 1}'] = frequency / token_window_neighbor_sum[window]
+                    if len(top_n_neighbors) != window:
+                        for i in range(len(top_n_neighbors), window):
+                            token_stats[f'w_{window}{i + 1}'] = neighbor
+                            token_stats[f'p_{window}{i + 1}'] = frequency / token_window_neighbor_sum[window]
+
+
+                logging.info(token_stats)
+                self.db.update_token([token_stats])
+
 
     def increment(self, word: str, window: int, neighbor: str, addition: int = 1):
         self.get_or_create(word, window, neighbor).neighbor_frequency += addition
@@ -102,9 +64,6 @@ class Store:
 
     # get or create
     def get_or_create(self, word: str, window: int, neighbor: str) -> TokenCounter:
-        if self.db is None:
-            self._init_db()
-
         key: str = f'{word}.{window}.{neighbor}'
 
         token_counter: TokenCounter = self.cache.get(key)
@@ -130,3 +89,16 @@ class Store:
 
     def _append_words(self, word_counter: dict[str, int]):
         self.db.append_words(word_counter)
+
+
+    def close(self):
+        logging.info("closing")
+        self._append(self.cache.values())
+        self._append_words(self.word_counter)
+
+        logging.info(f'most common word of worker: {Counter(self.word_counter).most_common(10)}')
+
+        logging.info("clean cache")
+        self.cache.clear()
+        self.reduce_stored_counters()
+        logging.info("store closed")
