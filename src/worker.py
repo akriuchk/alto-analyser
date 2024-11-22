@@ -62,7 +62,7 @@ class Worker(Process):
 
         self.store.increment_word_freq(word)
 
-        word_filter = self.config.filter
+        word_filter = self.config.words_for_analysis
         if word.lower() not in word_filter:
             return
 

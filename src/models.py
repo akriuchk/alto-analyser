@@ -3,9 +3,9 @@ from dataclasses import dataclass
 
 @dataclass
 class TokenCounter:
-    __slots__ = ("word", "window", "neighbor", "neighbor_frequency")
+    __slots__ = ("word", "window", "neighbour", "neighbour_frequency")
     word: str
     window: int
-    neighbor: str
-    neighbor_frequency: int
-    # key: str  # word.window.neighbor
+    neighbour: str
+    neighbour_frequency: int
+    # key: str  # word.window.neighbour

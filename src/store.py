@@ -33,27 +33,29 @@ class Store:
             for token in tokens:
                 pbar.update(1)
 
-                token_window_neighbor_sum: dict[int, int] = self.db.get_token_window_neighbor_sum(token)
+                token_window_neighbour_sum: dict[int, int] = self.db.get_token_window_neighbour_sum(token)
 
                 token_stats: dict = {"word": token}
                 for window in self.config.windows:
-                    top_n_neighbors: dict[str, int] = self.db.get_top_n_neighbors(token, window)
+                    top_n_neighbours: dict[str, int] = self.db.get_top_n_neighbours(token, window)
 
-                    for idx, (neighbor, frequency) in enumerate(top_n_neighbors.items()):
-                        token_stats[f'w_{window}{idx + 1}'] = neighbor
-                        token_stats[f'p_{window}{idx + 1}'] = frequency / token_window_neighbor_sum[window]
-                    if len(top_n_neighbors) != window:
-                        for i in range(len(top_n_neighbors), window):
-                            token_stats[f'w_{window}{i + 1}'] = neighbor
-                            token_stats[f'p_{window}{i + 1}'] = frequency / token_window_neighbor_sum[window]
+                    for idx, (neighbour, frequency) in enumerate(top_n_neighbours.items()):
+                        token_stats[f'w_{window}{idx + 1}'] = neighbour
+                        token_stats[f'p_{window}{idx + 1}'] = frequency / token_window_neighbour_sum[window]
+                    if len(top_n_neighbours) != window:
+                        for i in range(len(top_n_neighbours), window):
+                            token_stats[f'w_{window}{i + 1}'] = neighbour
+                            token_stats[f'p_{window}{i + 1}'] = frequency / token_window_neighbour_sum[window]
 
 
                 logging.info(token_stats)
                 self.db.update_token([token_stats])
+                
+        self.db.update_tokens_calculate_probability()
 
 
-    def increment(self, word: str, window: int, neighbor: str, addition: int = 1):
-        self.get_or_create(word, window, neighbor).neighbor_frequency += addition
+    def increment(self, word: str, window: int, neighbour: str, addition: int = 1):
+        self.get_or_create(word, window, neighbour).neighbour_frequency += addition
 
     def increment_word_freq(self, word):
         frequency = self.word_counter.get(word)
@@ -63,12 +65,12 @@ class Store:
             self.word_counter.set(word, frequency + 1)
 
     # get or create
-    def get_or_create(self, word: str, window: int, neighbor: str) -> TokenCounter:
-        key: str = f'{word}.{window}.{neighbor}'
+    def get_or_create(self, word: str, window: int, neighbour: str) -> TokenCounter:
+        key: str = f'{word}.{window}.{neighbour}'
 
         token_counter: TokenCounter = self.cache.get(key)
         if token_counter is None:
-            token_counter = TokenCounter(word, int(window), neighbor, neighbor_frequency=0)
+            token_counter = TokenCounter(word, int(window), neighbour, neighbour_frequency=0)
             self.cache.set(key, token_counter)
         return token_counter
 
@@ -84,8 +86,8 @@ class Store:
         if word_overflow and len(word_overflow) > 0:
             self._append_words(word_overflow)
 
-    def _append(self, token_neighbor_counters: list[TokenCounter]):
-        self.db.append_neighbor_counters(token_neighbor_counters)
+    def _append(self, token_neighbour_counters: list[TokenCounter]):
+        self.db.append_neighbour_counters(token_neighbour_counters)
 
     def _append_words(self, word_counter: dict[str, int]):
         self.db.append_words(word_counter)

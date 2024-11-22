@@ -58,7 +58,7 @@ class SqliteClient:
         """ create a database connection to an SQLite database """
         conn.execute('PRAGMA journal_mode = OFF;')
         conn.execute('PRAGMA synchronous = 0;')
-        conn.execute('PRAGMA cache_size = 200000;')  # give it a 0.1GB
+        conn.execute('PRAGMA cache_size = 200000;')
         conn.execute('PRAGMA locking_mode = EXCLUSIVE;')
         conn.execute('PRAGMA temp_store = MEMORY;')
 
@@ -84,12 +84,12 @@ class SqliteClient:
                     {",".join(word_columns)},
                     PRIMARY KEY (word)
             );""",
-            """CREATE TABLE IF NOT EXISTS token_neighbors(
+            """CREATE TABLE IF NOT EXISTS token_neighbours(
                 word TEXT NOT NULL,
                 window INTEGER NOT NULL,
-                neighbor TEXT NOT NULL,
+                neighbour TEXT NOT NULL,
                 frequency INT NOT NULL DEFAULT 0,
-                PRIMARY KEY (word, window, neighbor)
+                PRIMARY KEY (word, window, neighbour)
             )"""
         ]
 
@@ -114,15 +114,15 @@ class SqliteClient:
             except sqlite3.Error as e:
                 logging.error(f'ERROR: Failed to execute query sql:{sql}\ndata:{current_batch}',e)
 
-    def append_neighbor_counters(self, token_neighbor_counters: list[TokenCounter]):
-        sql = f"""INSERT INTO token_neighbors(word,window,neighbor,frequency) VALUES(?,?,?,?)
-                ON CONFLICT(word,window,neighbor) DO UPDATE SET frequency=frequency+excluded.frequency
+    def append_neighbour_counters(self, token_neighbour_counters: list[TokenCounter]):
+        sql = f"""INSERT INTO token_neighbours(word,window,neighbour,frequency) VALUES(?,?,?,?)
+                ON CONFLICT(word,window,neighbour) DO UPDATE SET frequency=frequency+excluded.frequency
                 """
 
-        for batch in batched(token_neighbor_counters, 250_000):
+        for batch in batched(token_neighbour_counters, 250_000):
             current_batch = []
             for counter in batch:
-                current_batch.append((counter.word, counter.window, counter.neighbor, counter.neighbor_frequency))
+                current_batch.append((counter.word, counter.window, counter.neighbour, counter.neighbour_frequency))
 
             try:
                 with self.get_connection() as conn:
@@ -135,7 +135,7 @@ class SqliteClient:
                 logging.error(f'ERROR: Failed to execute query sql:{sql}\ndata:{str(current_batch)}',e)
 
     def fetch_analysed_tokens(self) -> list[str]:
-        sql = "select distinct(word) from token_neighbors"
+        sql = "select distinct(word) from token_neighbours"
 
         try:
             with self.get_connection() as conn:
@@ -144,10 +144,10 @@ class SqliteClient:
         except sqlite3.Error as e:
             logging.error(f'ERROR: Failed to execute query sql:{sql}', e)
 
-    def get_token_window_neighbor_sum(self, token) -> dict[int, int]:
+    def get_token_window_neighbour_sum(self, token) -> dict[int, int]:
         # returns {3: 2010, 5: 2564}
         sql = f"""select "window", sum(frequency) 
-                 from token_neighbors tn 
+                 from token_neighbours tn 
                  where word = '{token}'
                  group by word, "window";"""
 
@@ -158,11 +158,11 @@ class SqliteClient:
         except sqlite3.Error as e:
             logging.error(f'ERROR: Failed to execute query sql:{sql}', e)
 
-    def get_top_n_neighbors(self, token, window) -> dict[str, int]:
+    def get_top_n_neighbours(self, token, window) -> dict[str, int]:
         # returns {and: 77, of: 75, to: 68}
         exclusions = ",".join([f'\"{w}\"' for w in self.config.neighbour_filter])
-        sql = f"""select neighbor, frequency from token_neighbors tn 
-                where word = "{token}" and "window" = {window} and neighbor not in ({exclusions})
+        sql = f"""select neighbour, frequency from token_neighbours tn 
+                where word = "{token}" and "window" = {window} and neighbour not in ({exclusions})
                 order by frequency desc 
                 limit {window}"""
 
@@ -174,12 +174,19 @@ class SqliteClient:
         except sqlite3.Error as e:
             logging.error(f'ERROR: Failed to execute query sql:{sql}', e)
 
-    def fetch_sum_of_all_tokens(self):
-        sql = "select sum(frequency) from tokens t;"
+    def update_tokens_calculate_probability(self):
+        sql = """
+        with total_frequency(total) as (
+            select SUM(frequency)
+            from tokens
+        )
+        update tokens
+        set probability = CAST(frequency AS REAL) / (select total_frequency.total from total_frequency);
+        """
 
         try:
             with self.get_connection() as conn:
-                return [row[0] for row in conn.execute(sql).fetchall()]
+                conn.execute(sql)
 
         except sqlite3.Error as e:
             logging.error(f'ERROR: Failed to execute query sql:{sql}', e)

@@ -2,3 +2,4 @@ data
 alto_venv
 alto_pypy_venv
 .idea
+**__pycache__
